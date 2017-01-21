@@ -1,5 +1,5 @@
 /*
-ol-mapbox-style - Use Mapbox Style objects with OpenLayers
+mapbox-to-ol-style - Create OpenLayers style functions from Mapbox Style objects
 Copyright 2016-present Boundless Spatial, Inc.
 License: https://raw.githubusercontent.com/boundlessgeo/ol-mapbox-gl-style/master/LICENSE.md
 */

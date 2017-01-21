@@ -1,14 +1,14 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/boundlessgeo/ol-mapbox-style.git"
+    "url": "git://github.com/boundlessgeo/mapbox-to-ol-style.git"
   },
   "bugs": {
-    "url": "https://github.com/boundlessgeo/ol-mapbox-style/issues"
+    "url": "https://github.com/boundlessgeo/mapbox-to-ol-style/issues"
   },
   "keywords": [
     "openlayers",

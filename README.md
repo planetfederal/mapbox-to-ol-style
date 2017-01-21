@@ -4,46 +4,30 @@ Converts Mapbox Style objects for vector tile layers into OpenLayers style funct
 
 ## Getting started
 
-To use a standalone build of ol-mapbox-style, just include 'dist/olms.js' on your HTML page. Otherwise just import the ol-mapbox-style module, like in the snippet below.
+To use a standalone build of mapbox-to-ol-style, just include 'dist/mb2olstyle.js' on your HTML page. Otherwise just import the mapbox-to-ol-style module, like in the snippet below.
 
-The code below creates a Mapbox Streets v7 layer with the bright v9 style:
+The code below creates a vector layer with a style from a Mapbox Style object:
 
 ```js
-import mb2ol from 'mapbox-to-ol-style';
+import mb2olstyle from 'mapbox-to-ol-style';
 // OpenLayers imports from https://npmjs.com/package/ol
-import tilegrid from 'ol/tilegrid';
-import VectorTileLayer from 'ol/layer/vectortile';
-import VectorTileSource from 'ol/source/vectortile';
-import MVT from 'ol/format/MVT';
+import VectorLayer from 'ol/layer/vector';
+import VectorTSource from 'ol/source/vector';
+import GeoJSON from 'ol/format/GeoJSON';
 
-var key = 'Your Mapbox Access Token here';
-
-var tileGrid = tilegrid.createXYZ({tileSize: 512, maxZoom: 22});
-var layer = new VectorTileLayer({
-  source: new VectorTileSource({
-    attributions: '© <a href="https://www.mapbox.com/map-feedback/">Mapbox</a> ' +
-      '© <a href="http://www.openstreetmap.org/copyright">' +
-      'OpenStreetMap contributors</a>',
-    format: new MVT(),
-    tileGrid: tileGrid,
-    tilePixelRatio: 8,
-    url: 'http://{a-d}.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/' +
-        '{z}/{x}/{y}.vector.pbf?access_token=' + key
+var layer = new VectorLayer({
+  source: new VectorSource({
+    format: new GeoJSON(),
+    url: 'data/states.geojson'
   })
 });
 
-fetch('https://api.mapbox.com/styles/v1/mapbox/bright-v9?access_token=' + key).then(function(response) {
+fetch('data/states.json').then(function(response) {
   response.json().then(function(glStyle) {
-    glStyle.sprite = 'https://api.mapbox.com/styles/v1/mapbox/bright-v9/sprite?access_token=' + key;
-    olms.applyStyle(layer, glStyle, 'mapbox').then(function() {
-      // Style is ready to use - add the layer to your OpenLayers Map instance
-      map.addLayer(layer);
-    });
+    layer.setStyle(mb2olstyle(glStyle, 'states'));
   });
 });
 ```
-
-Note that it is the responsibility of the application to load web fonts used by the GL Style. To apply the properties of the Mapbox Style's `background` layer to the map, use the `applyBackground` function.
 
 ## API
 
