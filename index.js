@@ -12,7 +12,6 @@ import Circle from 'ol/style/circle';
 import Text from 'ol/style/text';
 import glfun from 'mapbox-gl-style-spec/lib/function';
 import mb2css from 'mapbox-to-css-font';
-import FontFaceObserver from 'fontfaceobserver';
 
 var functions = {
   interpolated: [
@@ -94,49 +93,6 @@ function convertToFunctions(properties, type) {
   }
 }
 
-var fontMap = {};
-
-function chooseFont(fonts, onChange) {
-  if (!Array.isArray(fonts)) {
-    var stops = fonts.stops;
-    if (stops) {
-      for (var i = 0, ii = stops.length; i < ii; ++i) {
-        chooseFont(stops[i][1], onChange);
-      }
-    }
-    return;
-  }
-  var fontData = fontMap[fonts];
-  if (!fontData) {
-    fontData = fontMap[fonts] = {
-      css: mb2css.parseFont(fonts[fonts.length - 1])
-    };
-  }
-  var fontIndex = fontData.checking ? fonts.indexOf(fontData.checking) : 0;
-  var css = fontData.css;
-  if (!(fontData.checking || fontData.font)) {
-    fontData.checking = fonts[fontIndex];
-    css = mb2css.parseFont(fonts[fontIndex]);
-    new FontFaceObserver(css[3], {
-      weight: css[1],
-      style: css[0]
-    }).load().then(function() {
-      fontData.css = css;
-      fontData.font = fontData.checking;
-      delete fontData.checking;
-      onChange();
-    }, function() {
-      // Font is not available, try next
-      ++fontIndex;
-      if (fontIndex < fonts.length) {
-        fontData.checking = fonts[fontIndex];
-        chooseFont(fonts, onChange);
-        onChange();
-      }
-    });
-  }
-}
-
 function preprocess(layer, onChange) {
   if (!layer.paint) {
     layer.paint = {};
@@ -145,9 +101,6 @@ function preprocess(layer, onChange) {
     applyLayoutToPaint(layer);
   }
   applyDefaults(layer.paint);
-  if (layer.paint['text-field']) {
-    chooseFont(layer.paint['text-font'], onChange);
-  }
   convertToFunctions(layer.paint, 'interpolated');
   convertToFunctions(layer.paint, 'piecewise-constant');
 }
@@ -258,15 +211,6 @@ function deg2rad(degrees) {
   return degrees * Math.PI / 180;
 }
 
-var spriteRegEx = /^(.*)(\?access_token=.*)$/;
-
-function toSpriteUrl(url, extension) {
-  var parts = url.match(spriteRegEx);
-  return parts ?
-      parts[1] + extension + (parts.length > 2 ? parts[2] : '') :
-      url + extension;
-}
-
 var templateRegEx = /^(.*)\{(.*)\}(.*)$/;
 
 function fromTemplate(text, properties) {
@@ -279,11 +223,10 @@ function fromTemplate(text, properties) {
   }
 }
 
-
 /**
  * Creates a style function from the `glStyle` object for all layers that use
- * the specified `source`, which needs to be a `"type": "vector"`
- * source.
+ * the specified `source`, which needs to be a `"type": "vector"` or
+ * `"type": "geojson"` source.
  *
  * @param {string|Object} glStyle Mapbox Style object.
  * @param {string} source `source` key from the Mapbox Style object.
@@ -296,22 +239,22 @@ function fromTemplate(text, properties) {
  * 0.14929107086948487, 0.07464553543474244]]
  * Resolutions for mapping resolution to zoom level. For tile layers, this can
  * be `layer.getSource().getTileGrid().getResolutions()`.
- * @param {Function} [onChange=function() {}] Callback which will be called when
- * the style is ready to use for rendering, and every time a new resource (e.g.
- * icon sprite or font) is ready to be applied. When the `glStyle` has no
- * `sprite` and only standard fonts, the style will be ready to use immediately,
- * and the callback can be omitted.
+ * @param {Object} spriteData Sprite data from the url specified in the Mapbox
+ * Style object's `sprite` property. Only required if a `sprite` property is
+ * specified in the Mapbox Style object.
+ * @param {Object} spriteImageUrl Sprite image url for the sprite specified in
+ * the Mapbox Style object's `sprite` property. Only required if a `sprite`
+ * property is specified in the Mapbox Style object.
  * @return {ol.style.StyleFunction} Style function for use in
  * `ol.layer.Vector` or `ol.layer.VectorTile`.
  */
-export function getStyleFunction(glStyle, source, resolutions, onChange) {
+export default function(glStyle, source, resolutions, spriteData, spriteImageUrl) {
   if (!resolutions) {
     resolutions = [];
     for (var res = 156543.03392804097; resolutions.length < 22; res /= 2) {
       resolutions.push(res);
     }
   }
-  onChange = onChange || function() {};
   if (typeof glStyle == 'object') {
     // We do not want to modify the original, so we deep-clone it
     glStyle = JSON.stringify(glStyle);
@@ -319,34 +262,6 @@ export function getStyleFunction(glStyle, source, resolutions, onChange) {
   glStyle = JSON.parse(glStyle);
   if (glStyle.version != 8) {
     throw new Error('glStyle version 8 required.');
-  }
-  var spriteData;
-  var spriteImage;
-  var spriteImageSize;
-  var spriteScale;
-  if (glStyle.sprite) {
-    spriteScale = (window.devicePixelRatio || 1) >= 1.5 ? 0.5 : 1;
-    var xhr = new XMLHttpRequest();
-    var sizeFactor = spriteScale == 0.5 ? '@2x' : '';
-    var spriteUrl = toSpriteUrl(glStyle.sprite, sizeFactor + '.json');
-    xhr.open('GET', spriteUrl);
-    xhr.onload = xhr.onerror = function() {
-      if (!xhr.responseText) {
-        throw new Error('Sprites cannot be loaded from ' + spriteUrl);
-      }
-      spriteData = JSON.parse(xhr.responseText);
-      onChange();
-    };
-    xhr.send();
-    var spriteImageUrl = toSpriteUrl(glStyle.sprite, sizeFactor + '.png');
-    spriteImage = document.createElement('IMG');
-    spriteImage.onload = function() {
-      spriteImageSize = [spriteImage.width, spriteImage.height];
-      onChange();
-    };
-    spriteImage.src = spriteImageUrl;
-  } else {
-    window.setTimeout(onChange, 0);
   }
 
   var ctx = document.createElement('CANVAS').getContext('2d');
@@ -388,7 +303,7 @@ export function getStyleFunction(glStyle, source, resolutions, onChange) {
     resolveRef(layer, glStyle);
     if (layer.source == source) {
       layers.push(layer);
-      preprocess(layer, onChange);
+      preprocess(layer);
     }
   }
 
@@ -490,15 +405,14 @@ export function getStyleFunction(glStyle, source, resolutions, onChange) {
           var iconImage = paint['icon-image'](zoom);
           icon = fromTemplate(iconImage, properties);
           style = iconImageCache[icon];
-          if (!style && spriteData && spriteImageSize) {
+          if (!style && spriteData && spriteImageUrl) {
             var spriteImageData = spriteData[icon];
             style = iconImageCache[icon] = new Style({
               image: new Icon({
-                img: spriteImage,
+                src: spriteImageUrl,
                 size: [spriteImageData.width, spriteImageData.height],
-                imgSize: spriteImageSize,
                 offset: [spriteImageData.x, spriteImageData.y],
-                scale: paint['icon-size'](zoom) * spriteScale
+                scale: paint['icon-size'](zoom) / spriteImageData.pixelRatio
               })
             });
           }
@@ -553,7 +467,7 @@ export function getStyleFunction(glStyle, source, resolutions, onChange) {
           }
           text = style.getText();
           var textSize = paint['text-size'](zoom);
-          var font = mb2css.asCss(fontMap[paint['text-font'](zoom)].css, textSize);
+          var font = mb2css(paint['text-font'](zoom)[0], textSize);
           var textTransform = paint['text-transform'];
           if (textTransform == 'uppercase') {
             label = label.toUpperCase();
@@ -591,76 +505,4 @@ export function getStyleFunction(glStyle, source, resolutions, onChange) {
       return styles;
     }
   };
-}
-
-/**
- * Applies a style function to an `ol.layer.VectorTile` with an
- * `ol.source.VectorTile`. The style function will render all layers from the
- * `glStyle` object that use the specified `source`, which needs to be a
- * `"type": "vector"` source.
- *
- * @param {ol.layer.VectorTile} layer OpenLayers layer.
- * @param {string|Object} glStyle Mapbox Style object.
- * @param {string} source `source` key from the Mapbox Style object.
- * @return {Promise} Promise which will be resolved when the style can be used
- * for rendering.
- */
-export function applyStyle(layer, glStyle, source) {
-  return new Promise(function(resolve, reject) {
-    var resolutions = layer.getSource().getTileGrid().getResolutions();
-    var style;
-    var resolved = false;
-    function onChange() {
-      layer.setStyle(style);
-      if (!resolved) {
-        resolve();
-        resolved = true;
-      }
-    }
-    try {
-      style = getStyleFunction(glStyle, source, resolutions, onChange);
-    } catch (e) {
-      window.setTimeout(function() {
-        reject(e);
-      }, 0);
-    }
-  });
-}
-
-/**
- * Applies properties of the Mapbox Style's `background` layer to the map.
- * @param {ol.Map} map OpenLayers Map. Must have a `target` configured.
- * @param {Object} glStyle Mapbox Style object.
- */
-export function applyBackground(map, glStyle) {
-
-  var layer;
-
-  function updateStyle() {
-    var layout = layer.layout || {};
-    var paint = layer.paint || {};
-    var element = map.getTargetElement();
-    var zoom = map.getView().getZoom();
-    if ('background-color' in paint) {
-      element.style.backgroundColor =
-          glfun['piecewise-constant'](paint['background-color'])(zoom);
-    }
-    if ('background-opacity' in paint) {
-      element.style.backgroundOpacity =
-          glfun.interpolated(paint['background-opacity'])(zoom);
-    }
-    if (layout.visibility == 'none') {
-      element.style.backgroundColor = '';
-      element.style.backgroundOpacity = '';
-    }
-  }
-
-  glStyle.layers.some(function(l) {
-    if (l.type == 'background') {
-      layer = l;
-      updateStyle();
-      map.on('change:resolution', updateStyle);
-      return true;
-    }
-  });
 }
