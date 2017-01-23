@@ -4,7 +4,7 @@ Converts Mapbox Style objects for vector tile layers into OpenLayers style funct
 
 ## Getting started
 
-To use a standalone build of mapbox-to-ol-style, just include 'dist/mb2olstyle.js' on your HTML page. Otherwise just import the mapbox-to-ol-style module, like in the snippet below.
+To use a standalone build of mapbox-to-ol-style, just include 'dist/mb2olstyle.js' on your HTML page. Otherwise just import the [mapbox-to-ol-style](https://npmjs.com/package/mapbox-to-ol-style) module, like in the snippet below.
 
 The code below creates a vector layer with a style from a Mapbox Style object:
 
@@ -12,8 +12,8 @@ The code below creates a vector layer with a style from a Mapbox Style object:
 import mb2olstyle from 'mapbox-to-ol-style';
 // OpenLayers imports from https://npmjs.com/package/ol
 import VectorLayer from 'ol/layer/vector';
-import VectorTSource from 'ol/source/vector';
-import GeoJSON from 'ol/format/GeoJSON';
+import VectorSource from 'ol/source/vector';
+import GeoJSON from 'ol/format/geojson';
 
 var layer = new VectorLayer({
   source: new VectorSource({
