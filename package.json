@@ -1,6 +1,6 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Create OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
@@ -35,7 +35,7 @@
     "compile": "babel -d dist/ index.js",
     "doc": "documentation readme -s API index.js",
     "pretest": "eslint src",
-    "test": "browserify test/test.js -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] > test/test-bundle.js && mocha test/test-bundle.js && rm test/test-bundle.js"
+    "test": "browserify -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] test/test.js > test/test-bundle.js && mocha test/test-bundle.js && rm test/test-bundle.js"
   },
   "dependencies": {
     "mapbox-gl-style-spec": "8.11.0",
@@ -48,11 +48,11 @@
     "documentation": "4.0.0-beta.18",
     "eslint": "3.13.1",
     "eslint-config-openlayers": "6.0.0",
-    "expect.js": "0.3.1",
     "jsdom": "9.9.1",
     "jsdom-global": "2.1.1",
     "mocha": "3.2.0",
     "ol": "3.21.0-beta.16",
+    "should": "^11.1.2",
     "standalonify": "0.1.3"
   }
 }
