@@ -93,7 +93,35 @@ function convertToFunctions(properties, type) {
   }
 }
 
-function preprocess(layer, onChange) {
+var fontMap = {};
+
+function chooseFont(fonts, availableFonts) {
+  if (availableFonts) {
+    var font, i, ii;
+    if (!Array.isArray(fonts)) {
+      var stops = fonts.stops;
+      if (stops) {
+        for (i = 0, ii = stops.length; i < ii; ++i) {
+          chooseFont(stops[i][1], availableFonts);
+        }
+      }
+      return;
+    }
+    if (!fontMap[fonts]) {
+      for (i = 0, ii = fonts.length; i < ii; ++i) {
+        font = fonts[i];
+        if (availableFonts.indexOf(font) >= -1) {
+          fontMap[fonts] = font;
+          break;
+        }
+      }
+    }
+  } else {
+    fontMap[fonts] = fonts[0];
+  }
+}
+
+function preprocess(layer, fonts) {
   if (!layer.paint) {
     layer.paint = {};
   }
@@ -101,6 +129,9 @@ function preprocess(layer, onChange) {
     applyLayoutToPaint(layer);
   }
   applyDefaults(layer.paint);
+  if (layer.paint['text-field']) {
+    chooseFont(layer.paint['text-font'], fonts);
+  }
   convertToFunctions(layer.paint, 'interpolated');
   convertToFunctions(layer.paint, 'piecewise-constant');
 }
@@ -239,16 +270,19 @@ function fromTemplate(text, properties) {
  * 0.14929107086948487, 0.07464553543474244]]
  * Resolutions for mapping resolution to zoom level. For tile layers, this can
  * be `layer.getSource().getTileGrid().getResolutions()`.
- * @param {Object} spriteData Sprite data from the url specified in the Mapbox
- * Style object's `sprite` property. Only required if a `sprite` property is
- * specified in the Mapbox Style object.
- * @param {Object} spriteImageUrl Sprite image url for the sprite specified in
+ * @param {Object|undefined} spriteData Sprite data from the url specified in
  * the Mapbox Style object's `sprite` property. Only required if a `sprite`
  * property is specified in the Mapbox Style object.
+ * @param {Object|undefined} spriteImageUrl Sprite image url for the sprite
+ * specified in the Mapbox Style object's `sprite` property. Only required if a
+ * `sprite` property is specified in the Mapbox Style object.
+ * @param {Array<string>|undefined} fonts Array of available fonts, using the
+ * same font names as the Mapbox Style object. If not provided, the style
+ * function will always use the first font from the font array.
  * @return {ol.style.StyleFunction} Style function for use in
  * `ol.layer.Vector` or `ol.layer.VectorTile`.
  */
-export default function(glStyle, source, resolutions, spriteData, spriteImageUrl) {
+export default function(glStyle, source, resolutions, spriteData, spriteImageUrl, fonts) {
   if (!resolutions) {
     resolutions = [];
     for (var res = 156543.03392804097; resolutions.length < 22; res /= 2) {
@@ -303,7 +337,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     resolveRef(layer, glStyle);
     if (layer.source == source) {
       layers.push(layer);
-      preprocess(layer);
+      preprocess(layer, fonts);
     }
   }
 
@@ -467,7 +501,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           }
           text = style.getText();
           var textSize = paint['text-size'](zoom);
-          var font = mb2css(paint['text-font'](zoom)[0], textSize);
+          var font = mb2css(fontMap[paint['text-font'](zoom)], textSize);
           var textTransform = paint['text-transform'];
           if (textTransform == 'uppercase') {
             label = label.toUpperCase();

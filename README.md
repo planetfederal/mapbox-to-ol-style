@@ -51,12 +51,15 @@ the specified `source`, which needs to be a `"type": "vector"` or
     19.109257071294063,9.554628535647032,4.777314267823516,2.388657133911758,
     1.194328566955879,0.5971642834779395,0.29858214173896974,
     0.14929107086948487,0.07464553543474244]`)
--   `spriteData` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** Sprite data from the url specified in the Mapbox
-    Style object's `sprite` property. Only required if a `sprite` property is
-    specified in the Mapbox Style object.
--   `spriteImageUrl` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** Sprite image url for the sprite specified in
+-   `spriteData` **([Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) \| [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Sprite data from the url specified in
     the Mapbox Style object's `sprite` property. Only required if a `sprite`
     property is specified in the Mapbox Style object.
+-   `spriteImageUrl` **([Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) \| [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Sprite image url for the sprite
+    specified in the Mapbox Style object's `sprite` property. Only required if a
+    `sprite` property is specified in the Mapbox Style object.
+-   `fonts` **([Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)> | [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Array of available fonts, using the
+    same font names as the Mapbox Style object. If not provided, the style
+    function will always use the first font from the font array.
 
 Returns **ol.style.StyleFunction** Style function for use in
 `ol.layer.Vector` or `ol.layer.VectorTile`.
