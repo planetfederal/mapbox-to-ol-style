@@ -46,7 +46,11 @@ var functions = {
   ]
 };
 
-var defaults = {
+/**
+ * Mapbox Style defaults.
+ * @type {Object<string,string>}
+ */
+export var defaults = {
   'fill-opacity': 1,
   'line-cap': 'butt',
   'line-join': 'miter',
