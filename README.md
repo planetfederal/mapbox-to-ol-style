@@ -35,7 +35,8 @@ fetch('data/states.json').then(function(response) {
 
 ### defaults
 
-Mapbox Style defaults.
+Mapbox Style defaults. Key-value pairs with the style property as key and the
+default as value, e.g. `"fill-opacity": 1`.
 
 ### index
 

@@ -1,7 +1,7 @@
 /*
 mapbox-to-ol-style - Create OpenLayers style functions from Mapbox Style objects
 Copyright 2016-present Boundless Spatial, Inc.
-License: https://raw.githubusercontent.com/boundlessgeo/ol-mapbox-gl-style/master/LICENSE.md
+License: https://raw.githubusercontent.com/boundlessgeo/mapbox-to-ol-style/master/LICENSE.md
 */
 
 import Style from 'ol/style/style';
@@ -47,7 +47,8 @@ var functions = {
 };
 
 /**
- * Mapbox Style defaults.
+ * Mapbox Style defaults. Key-value pairs with the style property as key and the
+ * default as value, e.g. `"fill-opacity": 1`.
  * @type {Object<string,string>}
  */
 export var defaults = {
