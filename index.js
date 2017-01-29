@@ -46,12 +46,7 @@ var functions = {
   ]
 };
 
-/**
- * Mapbox Style defaults. Key-value pairs with the style property as key and the
- * default as value, e.g. `"fill-opacity": 1`.
- * @type {Object<string,string>}
- */
-export var defaults = {
+var defaults = {
   'fill-opacity': 1,
   'line-cap': 'butt',
   'line-join': 'miter',

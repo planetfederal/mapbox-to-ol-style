@@ -12,9 +12,11 @@ var map = new ol.Map({
   })
 });
 
-fetch('data/states.json').then(function(response) {
-  response.json().then(function(glStyle) {
-    layer.setStyle(mb2olstyle(glStyle, 'states'));
-    map.addLayer(layer);
-  });
-});
+var client = new XMLHttpRequest();
+client.open('GET', 'data/states.json');
+client.onload = function() {
+  var glStyle = JSON.parse(client.responseText);
+  layer.setStyle(mb2olstyle(glStyle, 'states'));
+  map.addLayer(layer);
+};
+client.send();
