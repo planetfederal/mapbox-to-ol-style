@@ -43,7 +43,7 @@ the specified `source`, which needs to be a `"type": "vector"` or
 
 -   `glStyle` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object))** Mapbox Style object.
 -   `source` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** `source` key from the Mapbox Style object.
--   `resolutions` **([Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)> | [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))?** Resolutions for mapping resolution to zoom level. For tile layers, this can
+-   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>?** Resolutions for mapping resolution to zoom level. For tile layers, this can
     be `layer.getSource().getTileGrid().getResolutions()`. (optional, default `[156543.03392804097,
     78271.51696402048,39135.75848201024,19567.87924100512,9783.93962050256,
     4891.96981025128,2445.98490512564,1222.99245256282,611.49622628141,
@@ -51,15 +51,15 @@ the specified `source`, which needs to be a `"type": "vector"` or
     19.109257071294063,9.554628535647032,4.777314267823516,2.388657133911758,
     1.194328566955879,0.5971642834779395,0.29858214173896974,
     0.14929107086948487,0.07464553543474244]`)
--   `spriteData` **([Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) \| [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Sprite data from the url specified in
+-   `spriteData` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)?** Sprite data from the url specified in
     the Mapbox Style object's `sprite` property. Only required if a `sprite`
-    property is specified in the Mapbox Style object.
--   `spriteImageUrl` **([Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) \| [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Sprite image url for the sprite
+    property is specified in the Mapbox Style object. (optional, default `undefined`)
+-   `spriteImageUrl` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)?** Sprite image url for the sprite
     specified in the Mapbox Style object's `sprite` property. Only required if a
-    `sprite` property is specified in the Mapbox Style object.
--   `fonts` **([Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)> | [undefined](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined))** Array of available fonts, using the
+    `sprite` property is specified in the Mapbox Style object. (optional, default `undefined`)
+-   `fonts` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>?** Array of available fonts, using the
     same font names as the Mapbox Style object. If not provided, the style
-    function will always use the first font from the font array.
+    function will always use the first font from the font array. (optional, default `undefined`)
 
 Returns **ol.style.StyleFunction** Style function for use in
 `ol.layer.Vector` or `ol.layer.VectorTile`.
@@ -68,4 +68,4 @@ Returns **ol.style.StyleFunction** Style function for use in
 
     npm install
 
-The resulting binary (`olms.js`) will be in the `dist/` folder. To see the library in action, navigate to `example/index.html`.
+The resulting binary (`mb2olstyle.js`) will be in the `dist/` folder. To see the library in action, navigate to `example/index.html`.

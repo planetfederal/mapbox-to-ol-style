@@ -261,7 +261,7 @@ function fromTemplate(text, properties) {
  *
  * @param {string|Object} glStyle Mapbox Style object.
  * @param {string} source `source` key from the Mapbox Style object.
- * @param {Array<number>|undefined} [resolutions=[156543.03392804097,
+ * @param {Array<number>} [resolutions=[156543.03392804097,
  * 78271.51696402048, 39135.75848201024, 19567.87924100512, 9783.93962050256,
  * 4891.96981025128, 2445.98490512564, 1222.99245256282, 611.49622628141,
  * 305.748113140705, 152.8740565703525, 76.43702828517625, 38.21851414258813,
@@ -270,13 +270,13 @@ function fromTemplate(text, properties) {
  * 0.14929107086948487, 0.07464553543474244]]
  * Resolutions for mapping resolution to zoom level. For tile layers, this can
  * be `layer.getSource().getTileGrid().getResolutions()`.
- * @param {Object|undefined} spriteData Sprite data from the url specified in
+ * @param {Object} [spriteData=undefined] Sprite data from the url specified in
  * the Mapbox Style object's `sprite` property. Only required if a `sprite`
  * property is specified in the Mapbox Style object.
- * @param {Object|undefined} spriteImageUrl Sprite image url for the sprite
+ * @param {Object} [spriteImageUrl=undefined] Sprite image url for the sprite
  * specified in the Mapbox Style object's `sprite` property. Only required if a
  * `sprite` property is specified in the Mapbox Style object.
- * @param {Array<string>|undefined} fonts Array of available fonts, using the
+ * @param {Array<string>} [fonts=undefined] Array of available fonts, using the
  * same font names as the Mapbox Style object. If not provided, the style
  * function will always use the first font from the font array.
  * @return {ol.style.StyleFunction} Style function for use in
