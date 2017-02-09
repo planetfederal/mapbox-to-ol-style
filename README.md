@@ -42,7 +42,10 @@ the specified `source`, which needs to be a `"type": "vector"` or
 **Parameters**
 
 -   `glStyle` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object))** Mapbox Style object.
--   `source` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** `source` key from the Mapbox Style object.
+-   `source` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>)** `source` key or an array of layer `id`s
+    from the Mapbox Style object. When a `source` key is provided, all layers for
+    the specified source will be included in the style function. When layer `id`s
+    are provided, they must be from layers that use the same source.
 -   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>?** Resolutions for mapping resolution to zoom level. For tile layers, this can
     be `layer.getSource().getTileGrid().getResolutions()`. (optional, default `[156543.03392804097,
     78271.51696402048,39135.75848201024,19567.87924100512,9783.93962050256,

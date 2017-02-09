@@ -260,7 +260,10 @@ function fromTemplate(text, properties) {
  * `"type": "geojson"` source.
  *
  * @param {string|Object} glStyle Mapbox Style object.
- * @param {string} source `source` key from the Mapbox Style object.
+ * @param {string|Array<string>} source `source` key or an array of layer `id`s
+ * from the Mapbox Style object. When a `source` key is provided, all layers for
+ * the specified source will be included in the style function. When layer `id`s
+ * are provided, they must be from layers that use the same source.
  * @param {Array<number>} [resolutions=[156543.03392804097,
  * 78271.51696402048, 39135.75848201024, 19567.87924100512, 9783.93962050256,
  * 4891.96981025128, 2445.98490512564, 1222.99245256282, 611.49622628141,
@@ -335,7 +338,8 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
       layer.layout = {};
     }
     resolveRef(layer, glStyle);
-    if (layer.source == source) {
+    if (typeof source == 'string' && layer.source == source ||
+        source.indexOf(layer.id) !== -1) {
       layers.push(layer);
       preprocess(layer, fonts);
     }
