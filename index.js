@@ -373,8 +373,8 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
         var type = properties['$type'];
         if (type == 'Polygon') {
           if (!('fill-pattern' in paint) && 'fill-color' in paint) {
-            opacity = paint['fill-opacity'](zoom);
-            color = colorWithOpacity(paint['fill-color'](zoom), opacity);
+            opacity = paint['fill-opacity'](zoom, properties);
+            color = colorWithOpacity(paint['fill-color'](zoom, properties), opacity);
             if (color) {
               ++stylesLength;
               style = styles[stylesLength];
@@ -388,7 +388,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               style.setZIndex(i);
             }
             if ('fill-outline-color' in paint) {
-              strokeColor = colorWithOpacity(paint['fill-outline-color'](zoom), opacity);
+              strokeColor = colorWithOpacity(paint['fill-outline-color'](zoom, properties), opacity);
             }
             if (strokeColor) {
               ++stylesLength;
@@ -412,9 +412,9 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
         if (type != 'Point') {
           if (!('line-pattern' in paint) && 'line-color' in paint) {
             color = colorWithOpacity(
-                paint['line-color'](zoom), paint['line-opacity'](zoom));
+                paint['line-color'](zoom, properties), paint['line-opacity'](zoom, properties));
           }
-          var width = paint['line-width'](zoom);
+          var width = paint['line-width'](zoom, properties);
           if (color && width > 0) {
             ++stylesLength;
             style = styles[stylesLength];
@@ -424,13 +424,13 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               });
             }
             stroke = style.getStroke();
-            stroke.setLineCap(paint['line-cap'](zoom));
-            stroke.setLineJoin(paint['line-join'](zoom));
-            stroke.setMiterLimit(paint['line-miter-limit'](zoom));
+            stroke.setLineCap(paint['line-cap'](zoom, properties));
+            stroke.setLineJoin(paint['line-join'](zoom, properties));
+            stroke.setMiterLimit(paint['line-miter-limit'](zoom, properties));
             stroke.setColor(color);
             stroke.setWidth(width);
             stroke.setLineDash(paint['line-dasharray'] ?
-                paint['line-dasharray'](zoom).map(function(x) {
+                paint['line-dasharray'](zoom, properties).map(function(x) {
                   return x * width;
                 }) : null);
             style.setZIndex(i);
@@ -440,7 +440,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
         var icon;
         if (type == 'Point' && 'icon-image' in paint) {
           ++stylesLength;
-          var iconImage = paint['icon-image'](zoom);
+          var iconImage = paint['icon-image'](zoom, properties);
           icon = fromTemplate(iconImage, properties);
           style = iconImageCache[icon];
           if (!style && spriteData && spriteImageUrl) {
@@ -450,14 +450,14 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
                 src: spriteImageUrl,
                 size: [spriteImageData.width, spriteImageData.height],
                 offset: [spriteImageData.x, spriteImageData.y],
-                scale: paint['icon-size'](zoom) / spriteImageData.pixelRatio
+                scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
               })
             });
           }
           if (style) {
             var iconImg = style.getImage();
-            iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom)));
-            iconImg.setOpacity(paint['icon-opacity'](zoom));
+            iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
+            iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
             style.setZIndex(i);
             styles[stylesLength] = style;
           }
@@ -465,19 +465,19 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
 
         if (type == 'Point' && 'circle-radius' in paint) {
           ++stylesLength;
-          var cache_key = paint['circle-radius'](zoom) + '.' +
-            paint['circle-stroke-color'](zoom) + '.' +
-            paint['circle-color'](zoom);
+          var cache_key = paint['circle-radius'](zoom, properties) + '.' +
+            paint['circle-stroke-color'](zoom, properties) + '.' +
+            paint['circle-color'](zoom, properties);
           style = iconImageCache[cache_key];
           if (!style) {
             style = new Style({
               image: new Circle({
-                radius: paint['circle-radius'](zoom),
+                radius: paint['circle-radius'](zoom, properties),
                 stroke: new Stroke({
-                  color: colorWithOpacity(paint['circle-stroke-color'](zoom), opacity)
+                  color: colorWithOpacity(paint['circle-stroke-color'](zoom, properties), opacity)
                 }),
                 fill: new Fill({
-                  color: colorWithOpacity(paint['circle-color'](zoom), opacity)
+                  color: colorWithOpacity(paint['circle-color'](zoom, properties), opacity)
                 })
               })
             });
@@ -488,7 +488,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
 
         var label;
         if ('text-field' in paint) {
-          var textField = paint['text-field'](zoom);
+          var textField = paint['text-field'](zoom, properties);
           label = fromTemplate(textField, properties);
         }
         // TODO Add LineString handling as soon as it's supporte in OpenLayers
@@ -504,20 +504,20 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
             });
           }
           text = style.getText();
-          var textSize = paint['text-size'](zoom);
-          var font = mb2css(fontMap[paint['text-font'](zoom)], textSize);
+          var textSize = paint['text-size'](zoom, properties);
+          var font = mb2css(fontMap[paint['text-font'](zoom, properties)], textSize);
           var textTransform = paint['text-transform'];
           if (textTransform == 'uppercase') {
             label = label.toUpperCase();
           } else if (textTransform == 'lowercase') {
             label = label.toLowerCase();
           }
-          var wrappedLabel = wrapText(label, font, paint['text-max-width'](zoom));
+          var wrappedLabel = wrapText(label, font, paint['text-max-width'](zoom, properties));
           text.setText(wrappedLabel);
           text.setFont(font);
-          var offset = paint['text-offset'](zoom);
+          var offset = paint['text-offset'](zoom, properties);
           var yOffset = offset[1] * textSize + (wrappedLabel.split('\n').length - 1) * textSize;
-          var anchor = paint['text-anchor'](zoom);
+          var anchor = paint['text-anchor'](zoom, properties);
           if (anchor.indexOf('top') == 0) {
             yOffset += 0.5 * textSize;
           } else if (anchor.indexOf('bottom') == 0) {
@@ -525,10 +525,10 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           }
           text.setOffsetX(offset[0] * textSize);
           text.setOffsetY(yOffset);
-          text.getFill().setColor(paint['text-color'](zoom));
+          text.getFill().setColor(paint['text-color'](zoom, properties));
           if (paint['text-halo-width']) {
-            textHalo.setWidth(paint['text-halo-width'](zoom));
-            textHalo.setColor(paint['text-halo-color'](zoom));
+            textHalo.setWidth(paint['text-halo-width'](zoom, properties));
+            textHalo.setColor(paint['text-halo-color'](zoom, properties));
             text.setStroke(textHalo);
           } else {
             text.setStroke(undefined);
