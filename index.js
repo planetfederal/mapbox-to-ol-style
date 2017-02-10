@@ -10,7 +10,7 @@ import Stroke from 'ol/style/stroke';
 import Icon from 'ol/style/icon';
 import Circle from 'ol/style/circle';
 import Text from 'ol/style/text';
-import glfun from 'mapbox-gl-style-spec/lib/function';
+import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import mb2css from 'mapbox-to-css-font';
 
 var functions = {
