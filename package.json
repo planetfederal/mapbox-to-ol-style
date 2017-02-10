@@ -1,6 +1,6 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Create OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
@@ -31,7 +31,7 @@
   ],
   "license": "BSD-2-Clause",
   "scripts": {
-    "prepublish": "npm run doc && mkdir -p dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] index.js > dist/mb2olstyle.js",
+    "prepublish": "npm run doc && mkdir -p dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] -g [ bubleify ] index.js > dist/mb2olstyle.js",
     "doc": "documentation readme -s API index.js",
     "pretest": "eslint src",
     "test": "browserify -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] test/test.js > test/test-bundle.js && mocha test/test-bundle.js && rm test/test-bundle.js"
@@ -45,6 +45,7 @@
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "browserify": "^13.3.0",
+    "bubleify": "^0.7.0",
     "documentation": "4.0.0-beta.18",
     "eslint": "3.13.1",
     "eslint-config-openlayers": "6.0.0",
