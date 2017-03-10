@@ -445,14 +445,16 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           style = iconImageCache[icon];
           if (!style && spriteData && spriteImageUrl) {
             var spriteImageData = spriteData[icon];
-            style = iconImageCache[icon] = new Style({
-              image: new Icon({
-                src: spriteImageUrl,
-                size: [spriteImageData.width, spriteImageData.height],
-                offset: [spriteImageData.x, spriteImageData.y],
-                scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
-              })
-            });
+            if (spriteImageData) {
+              style = iconImageCache[icon] = new Style({
+                image: new Icon({
+                  src: spriteImageUrl,
+                  size: [spriteImageData.width, spriteImageData.height],
+                  offset: [spriteImageData.x, spriteImageData.y],
+                  scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
+                })
+              });
+            }
           }
           if (style) {
             var iconImg = style.getImage();
