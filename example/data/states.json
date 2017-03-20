@@ -76,6 +76,26 @@
         "text-size": 12,
         "text-font": ["Arial Normal", "sans-serif Normal"]
       }
+    },
+    {
+      "id": "has_male",
+      "type": "fill",
+      "source": "states",
+      "filter": ["has", "MALE"],
+      "paint": {
+        "fill-color": "#000000",
+        "fill-opacity": 0.001
+      }
+    },
+    {
+      "id": "not_has_male",
+      "type": "fill",
+      "source": "states",
+      "filter": ["!has", "MALE"],
+      "paint": {
+        "fill-color": "#000000",
+        "fill-opacity": 0.001
+      }
     }
   ]
 }

@@ -35,6 +35,17 @@ describe('mapbox-to-ol-style', function() {
       should(style(feature, 1)).be.undefined();
     });
 
+    it('should handle has and !has', function() {
+      var style = getStyleFunction(states, ['has_male']);
+      should(style).be.a.Function;
+      should(style(feature, 1)).be.undefined();
+      feature.set('MALE', 20000);
+      should(style(feature, 1)).be.an.Array();
+      var style2 = getStyleFunction(states, ['not_has_male']);
+      should(style2(feature, 1)).be.undefined();
+      feature.unset('MALE');
+      should(style2(feature, 1)).be.an.Array();
+    });
   });
 
 });

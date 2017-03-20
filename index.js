@@ -198,6 +198,9 @@ function evaluate(filterObj, properties) {
       }
     }
     return true;
+  } else if (type == 'has' || type == '!has') {
+    var result = properties.hasOwnProperty(filterObj[1]);
+    return type == 'has' ? result : !result;
   }
 }
 
