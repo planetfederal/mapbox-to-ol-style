@@ -439,7 +439,6 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
 
         var icon;
         if (type == 'Point' && 'icon-image' in paint) {
-          ++stylesLength;
           var iconImage = paint['icon-image'](zoom, properties);
           icon = fromTemplate(iconImage, properties);
           style = iconImageCache[icon];
@@ -455,6 +454,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
             });
           }
           if (style) {
+            ++stylesLength;
             var iconImg = style.getImage();
             iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
             iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
