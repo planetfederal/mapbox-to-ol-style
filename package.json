@@ -25,8 +25,16 @@
       "email": "danlittle@yahoo.com"
     },
     {
+      "name": "Yancy Matherne",
+      "email": "ymatherne@boundlessgeo.com"
+    },
+    {
       "name": "Christian Mayer",
       "email": "chris@meggsimum.de"
+    },
+    {
+      "name": "Antti Risteli",
+      "email": "antti@kiinnost.us"
     }
   ],
   "license": "BSD-2-Clause",
