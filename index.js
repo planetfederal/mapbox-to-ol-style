@@ -157,7 +157,7 @@ function resolveRef(layer, glStyleObj) {
 
 function evaluate(filterObj, properties) {
   var type = filterObj[0];
-  var i, ii;
+  var i, ii, result;
   if (type == '==') {
     return properties[filterObj[1]] === filterObj[2];
   } else if (type == '!=') {
@@ -171,7 +171,7 @@ function evaluate(filterObj, properties) {
   } else if (type == '<=') {
     return properties[filterObj[1]] <= filterObj[2];
   } else if (type == 'in' || type == '!in') {
-    var result = false;
+    result = false;
     var property = properties[filterObj[1]];
     for (i = 2, ii = filterObj.length; i < ii; ++i) {
       result = result || property == filterObj[i];
@@ -199,7 +199,7 @@ function evaluate(filterObj, properties) {
     }
     return true;
   } else if (type == 'has' || type == '!has') {
-    var result = properties.hasOwnProperty(filterObj[1]);
+    result = properties.hasOwnProperty(filterObj[1]);
     return type == 'has' ? result : !result;
   }
 }
