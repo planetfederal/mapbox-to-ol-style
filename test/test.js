@@ -1,6 +1,6 @@
 import should from 'should/as-function';
 import getStyleFunction from '../';
-import states from '../example/data/states.json';
+import states from './data/states.json';
 import Feature from 'ol/feature';
 import Polygon from 'ol/geom/polygon';
 
