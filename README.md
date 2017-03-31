@@ -1,6 +1,6 @@
 # mapbox-to-ol-style
 
-Converts Mapbox Style objects for vector tile layers into OpenLayers style functions.
+Utilities for creating OpenLayers style functions from Mapbox Style objects.
 
 ## Getting started
 
