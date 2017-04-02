@@ -257,6 +257,61 @@ function fromTemplate(text, properties) {
   }
 }
 
+function getPropertyFromTemplate(text) {
+  var parts = text.match(templateRegEx);
+  return parts && parts[2];
+}
+
+function calculateReferencedPropertiesFromFilter(seenProperties, filterObj) {
+  var type = filterObj[0];
+  var propertyIsFirst = ['==', '!=', '>', '<', '>=', '<=', 'in', '!in', 'has', '!has'];
+  var recurseFilters = ['all', 'any', 'none'];
+  if (propertyIsFirst.indexOf(type) >= 0) {
+    seenProperties[filterObj[1]] = true;
+  } else if (recurseFilters.indexOf(type) >= 0) {
+    for (var i = 1; i < filterObj.length; ++i) {
+      calculateReferencedPropertiesFromFilter(seenProperties, filterObj[i]);
+    }
+  }
+}
+
+function recurseForTemplates(seenProperties, toRecurse) {
+  if (typeof toRecurse === 'string') {
+    var templateUsed = getPropertyFromTemplate(toRecurse);
+    if (templateUsed) {
+      seenProperties[templateUsed] = true;
+    }
+  } else if (Object.prototype.toString.call(toRecurse) === '[object Array]' ) {
+    for (var i = 0; i < toRecurse.length; i++) {
+      recurseForTemplates(seenProperties, toRecurse[i]);
+    }
+  } else if (typeof toRecurse === 'object') {
+    for (var key in toRecurse) {
+      recurseForTemplates(seenProperties, toRecurse[key]);
+    }
+  }
+}
+
+/*
+Calculates all the properties referenced in the style file
+*/
+function calculateStyleProperties(glStyle) {
+  var seenProperties = {};
+  for (var i = 0; i < glStyle.layers.length; i++) {
+    var layer = glStyle.layers[i];
+    if (layer.filter) {
+      calculateReferencedPropertiesFromFilter(seenProperties, layer.filter);
+    }
+    if (layer.layout) {
+      recurseForTemplates(seenProperties, layer.layout);
+    }
+    if (layer.paint) {
+      recurseForTemplates(seenProperties, layer.paint);
+    }
+  }
+  return seenProperties;
+}
+
 /**
  * Creates a style function from the `glStyle` object for all layers that use
  * the specified `source`, which needs to be a `"type": "vector"` or
@@ -333,6 +388,9 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     return wrappedText;
   }
 
+  var styleProperties = calculateStyleProperties(glStyle);
+  styleProperties['layer'] = true;
+
   var allLayers = glStyle.layers;
   var layers = [];
   for (var i = 0, ii = allLayers.length; i < ii; ++i) {
@@ -355,6 +413,22 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
 
   var styles = [];
 
+  var lastZoom;
+  var lastProperties = {};
+  var lastUsedPropertiesCount = 0;
+
+  var layersBySourceLayer = {};
+  var layersWithoutSourceLayer = [];
+
+  layers.forEach(function (layer, index) {
+    if (layer['source-layer']) {
+      layersBySourceLayer[layer['source-layer']] = layersBySourceLayer[layer['source-layer']] || [];
+      layersBySourceLayer[layer['source-layer']].push([layer, index]);
+    } else {
+      layersWithoutSourceLayer.push([layer, index]);
+    }
+  });
+
   return function(feature, resolution) {
     var zoom = resolutions.indexOf(resolution);
     if (zoom == -1) {
@@ -362,11 +436,40 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     }
     var properties = feature.getProperties();
     properties['$type'] = feature.getGeometry().getType().replace('Multi', '');
+
+    var isMatch = lastZoom === zoom;
+    var usedPropertiesCount = 0;
+    for (var property in properties) {
+      // don't bother comparing properties that don't affect styles
+      if (!styleProperties[property]) {
+        continue;
+      }
+      ++usedPropertiesCount;
+      isMatch = isMatch && lastProperties[property] === properties[property];
+    }
+    isMatch = isMatch && lastUsedPropertiesCount === usedPropertiesCount;
+
+    if (isMatch) {
+      return styles;
+    }
+
+    lastProperties = properties;
+    lastUsedPropertiesCount = usedPropertiesCount;
+    lastZoom = zoom;
+
     var stylesLength = -1;
-    for (var i = 0, ii = layers.length; i < ii; ++i) {
-      var layer = layers[i];
-      if ((layer['source-layer'] && layer['source-layer'] != properties.layer) ||
-          ('minzoom' in layer && zoom < layer.minzoom) ||
+    var sourceLayersLength = 0;
+    var potentialLayers = [];
+    if (properties.layer && layersBySourceLayer[properties.layer]) {
+      potentialLayers = layersBySourceLayer[properties.layer];
+      sourceLayersLength = potentialLayers.length;
+    }
+
+    for (var i = 0, ii = sourceLayersLength + layersWithoutSourceLayer.length; i < ii; ++i) {
+      var layerAndIndex = i < sourceLayersLength ? potentialLayers[i] : layersWithoutSourceLayer[i];
+      var layer = layerAndIndex[0]
+      var index = layerAndIndex[1]
+      if (('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
@@ -388,7 +491,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               }
               fill = style.getFill();
               fill.setColor(color);
-              style.setZIndex(i);
+              style.setZIndex(index);
             }
             if ('fill-outline-color' in paint) {
               strokeColor = colorWithOpacity(paint['fill-outline-color'](zoom, properties), opacity);
@@ -408,7 +511,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               stroke.setColor(strokeColor);
               stroke.setWidth(1);
               stroke.setLineDash(null);
-              style.setZIndex(i);
+              style.setZIndex(index);
             }
           }
         }
@@ -436,7 +539,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
                 paint['line-dasharray'](zoom, properties).map(function(x) {
                   return x * width;
                 }) : null);
-            style.setZIndex(i);
+            style.setZIndex(index);
           }
         }
 
@@ -463,7 +566,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
             var iconImg = style.getImage();
             iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
             iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
-            style.setZIndex(i);
+            style.setZIndex(index);
             styles[stylesLength] = style;
           }
         }
@@ -487,7 +590,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               })
             });
           }
-          style.setZIndex(i);
+          style.setZIndex(index);
           styles[stylesLength] = style;
         }
 
@@ -538,14 +641,12 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           } else {
             text.setStroke(undefined);
           }
-          style.setZIndex(i);
+          style.setZIndex(index);
         }
       }
     }
 
-    if (stylesLength > -1) {
-      styles.length = stylesLength + 1;
-      return styles;
-    }
+    styles.length = stylesLength + 1;
+    return styles;
   };
 }
