@@ -11,6 +11,7 @@ import Icon from 'ol/style/icon';
 import Circle from 'ol/style/circle';
 import Text from 'ol/style/text';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
+import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
 
 var functions = {
@@ -66,6 +67,14 @@ var defaults = {
   'icon-size': 1,
   'circle-color' : '#000000',
   'circle-stroke-color' : '#000000'
+};
+
+var types = {
+  'Point': 1,
+  'MultiPoint': 1,
+  'LineString': 2,
+  'MultiLineString': 2,
+  'Polygon': 3
 };
 
 function applyDefaults(properties) {
@@ -131,6 +140,9 @@ function preprocess(layer, fonts) {
   applyDefaults(layer.paint);
   if (layer.paint['text-field']) {
     chooseFont(layer.paint['text-font'], fonts);
+  }
+  if (Array.isArray(layer.filter)) {
+    layer.filter = createFilter(layer.filter);
   }
   convertToFunctions(layer.paint, 'interpolated');
   convertToFunctions(layer.paint, 'piecewise-constant');
@@ -370,20 +382,22 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     if (zoom == -1) {
       zoom = getZoomForResolution(resolution, resolutions);
     }
-    properties['$type'] = feature.getGeometry().getType().replace('Multi', '');
+    var type = types[feature.getGeometry().getType()];
+    var f = {
+      properties: properties,
+      type: type
+    };
     var stylesLength = -1;
     for (var i = 0, ii = layers.length; i < ii; ++i) {
       var layer = layers[i];
-      if ((layer['source-layer'] && layer['source-layer'] != properties.layer) ||
-          ('minzoom' in layer && zoom < layer.minzoom) ||
+      if (('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
-      if (!layer.filter || evaluate(layer.filter, properties)) {
+      if (!layer.filter || layer.filter(f)) {
         var color, opacity, fill, stroke, strokeColor, style, text;
         var paint = layer.paint;
-        var type = properties['$type'];
-        if (type == 'Polygon') {
+        if (type == 3) {
           if (!('fill-pattern' in paint) && 'fill-color' in paint) {
             opacity = paint['fill-opacity'](zoom, properties);
             color = colorWithOpacity(paint['fill-color'](zoom, properties), opacity);
@@ -450,7 +464,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
         }
 
         var icon;
-        if (type == 'Point' && 'icon-image' in paint) {
+        if (type == 1 && 'icon-image' in paint) {
           var iconImage = paint['icon-image'](zoom, properties);
           icon = fromTemplate(iconImage, properties);
           style = iconImageCache[icon];
@@ -477,7 +491,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           }
         }
 
-        if (type == 'Point' && 'circle-radius' in paint) {
+        if (type == 1 && 'circle-radius' in paint) {
           ++stylesLength;
           var cache_key = paint['circle-radius'](zoom, properties) + '.' +
             paint['circle-stroke-color'](zoom, properties) + '.' +
@@ -506,7 +520,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           label = fromTemplate(textField, properties);
         }
         // TODO Add LineString handling as soon as it's supporte in OpenLayers
-        if (label && type !== 'LineString') {
+        if (label && type !== 2) {
           ++stylesLength;
           style = styles[stylesLength];
           if (!style || !style.getText() || style.getFill() || style.getStroke()) {
