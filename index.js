@@ -334,7 +334,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
   }
 
   var allLayers = glStyle.layers;
-  var layers = [];
+  var layersBySourceLayer = {};
   for (var i = 0, ii = allLayers.length; i < ii; ++i) {
     var layer = allLayers[i];
     if (!layer.layout) {
@@ -343,6 +343,11 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     resolveRef(layer, glStyle);
     if (typeof source == 'string' && layer.source == source ||
         source.indexOf(layer.id) !== -1) {
+      var sourceLayer = layer['source-layer'];
+      var layers = layersBySourceLayer[sourceLayer];
+      if (!layers) {
+        layers = layersBySourceLayer[sourceLayer] = [];
+      }
       layers.push(layer);
       preprocess(layer, fonts);
     }
@@ -356,11 +361,15 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
   var styles = [];
 
   return function(feature, resolution) {
+    var properties = feature.getProperties();
+    var layers = layersBySourceLayer[properties.layer];
+    if (!layers) {
+      return;
+    }
     var zoom = resolutions.indexOf(resolution);
     if (zoom == -1) {
       zoom = getZoomForResolution(resolution, resolutions);
     }
-    var properties = feature.getProperties();
     properties['$type'] = feature.getGeometry().getType().replace('Multi', '');
     var stylesLength = -1;
     for (var i = 0, ii = layers.length; i < ii; ++i) {
