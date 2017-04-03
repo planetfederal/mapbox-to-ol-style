@@ -65,8 +65,8 @@ var defaults = {
   'icon-opacity': 1,
   'icon-rotate': 0,
   'icon-size': 1,
-  'circle-color' : '#000000',
-  'circle-stroke-color' : '#000000'
+  'circle-color': '#000000',
+  'circle-stroke-color': '#000000'
 };
 
 var types = {
