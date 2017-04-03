@@ -167,55 +167,6 @@ function resolveRef(layer, glStyleObj) {
   }
 }
 
-function evaluate(filterObj, properties) {
-  var type = filterObj[0];
-  var i, ii, result;
-  if (type == '==') {
-    return properties[filterObj[1]] === filterObj[2];
-  } else if (type == '!=') {
-    return properties[filterObj[1]] !== filterObj[2];
-  } else if (type == '>') {
-    return properties[filterObj[1]] > filterObj[2];
-  } else if (type == '<') {
-    return properties[filterObj[1]] < filterObj[2];
-  } else if (type == '>=') {
-    return properties[filterObj[1]] >= filterObj[2];
-  } else if (type == '<=') {
-    return properties[filterObj[1]] <= filterObj[2];
-  } else if (type == 'in' || type == '!in') {
-    result = false;
-    var property = properties[filterObj[1]];
-    for (i = 2, ii = filterObj.length; i < ii; ++i) {
-      result = result || property == filterObj[i];
-    }
-    return type == 'in' ? result : !result;
-  } else if (type == 'all') {
-    for (i = 1, ii = filterObj.length; i < ii; ++i) {
-      if (!evaluate(filterObj[i], properties)) {
-        return false;
-      }
-    }
-    return true;
-  } else if (type == 'any') {
-    for (i = 1, ii = filterObj.length; i < ii; ++i) {
-      if (evaluate(filterObj[i], properties)) {
-        return true;
-      }
-    }
-    return false;
-  } else if (type == 'none') {
-    for (i = 1, ii = filterObj.length; i < ii; ++i) {
-      if (evaluate(filterObj[i], properties)) {
-        return false;
-      }
-    }
-    return true;
-  } else if (type == 'has' || type == '!has') {
-    result = properties.hasOwnProperty(filterObj[1]);
-    return type == 'has' ? result : !result;
-  }
-}
-
 function getZoomForResolution(resolution, resolutions) {
   var candidate;
   var i = 0, ii = resolutions.length;
