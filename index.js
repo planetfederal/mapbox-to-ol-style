@@ -312,7 +312,10 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
       if (!layers) {
         layers = layersBySourceLayer[sourceLayer] = [];
       }
-      layers.push(layer);
+      layers.push({
+        layer: layer,
+        index: i
+      });
       preprocess(layer, fonts);
     }
   }
@@ -341,7 +344,8 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     };
     var stylesLength = -1;
     for (var i = 0, ii = layers.length; i < ii; ++i) {
-      var layer = layers[i];
+      var layerData = layers[i];
+      var layer = layerData.layer;
       if (('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
@@ -349,6 +353,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
       if (!layer.filter || layer.filter(f)) {
         var color, opacity, fill, stroke, strokeColor, style, text;
         var paint = layer.paint;
+        var index = layerData.index;
         if (type == 3) {
           if (!('fill-pattern' in paint) && 'fill-color' in paint) {
             opacity = paint['fill-opacity'](zoom, properties);
@@ -363,7 +368,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               }
               fill = style.getFill();
               fill.setColor(color);
-              style.setZIndex(i);
+              style.setZIndex(index);
             }
             if ('fill-outline-color' in paint) {
               strokeColor = colorWithOpacity(paint['fill-outline-color'](zoom, properties), opacity);
@@ -383,7 +388,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               stroke.setColor(strokeColor);
               stroke.setWidth(1);
               stroke.setLineDash(null);
-              style.setZIndex(i);
+              style.setZIndex(index);
             }
           }
         }
@@ -411,7 +416,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
                 paint['line-dasharray'](zoom, properties).map(function(x) {
                   return x * width;
                 }) : null);
-            style.setZIndex(i);
+            style.setZIndex(index);
           }
         }
 
@@ -438,7 +443,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
             var iconImg = style.getImage();
             iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
             iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
-            style.setZIndex(i);
+            style.setZIndex(index);
             styles[stylesLength] = style;
           }
         }
@@ -462,7 +467,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
               })
             });
           }
-          style.setZIndex(i);
+          style.setZIndex(index);
           styles[stylesLength] = style;
         }
 
@@ -513,7 +518,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           } else {
             text.setStroke(undefined);
           }
-          style.setZIndex(i);
+          style.setZIndex(index);
         }
       }
     }
