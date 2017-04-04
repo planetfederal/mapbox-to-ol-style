@@ -74,7 +74,8 @@ var types = {
   'MultiPoint': 1,
   'LineString': 2,
   'MultiLineString': 2,
-  'Polygon': 3
+  'Polygon': 3,
+  'MultiPolygon': 3
 };
 
 function applyDefaults(properties) {
