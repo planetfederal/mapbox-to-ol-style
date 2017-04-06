@@ -193,11 +193,17 @@ function colorWithOpacity(color, opacity) {
       document.body.appendChild(colorElement);
       var colorString = getComputedStyle(colorElement).getPropertyValue('color');
       document.body.removeChild(colorElement);
-      colorData = colorString.match(colorRegEx)[1].split(',').map(Number);
-      colorCache[color] = colorData;
+      var colorArray = colorString.match(colorRegEx)[1].split(',').map(Number);
+      if (colorArray.length == 3) {
+        colorArray.push(1);
+      }
+      colorCache[color] = colorData = {
+        color: colorArray,
+        opacity: colorArray[3]
+      };
     }
-    color = colorData.slice();
-    color[3] = color.length > 3 ? color[3] * opacity : opacity;
+    color = colorData.color;
+    color[3] = colorData.opacity * opacity;
     if (color[3] === 0) {
       color = undefined;
     }
