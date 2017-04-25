@@ -39,7 +39,7 @@
   ],
   "license": "BSD-2-Clause",
   "scripts": {
-    "prepublish": "npm run doc && mkdir -p dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] -g [ bubleify ] index.js > dist/mb2olstyle.js",
+    "prepublish": "npm run doc && mkdirp dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] -g [ bubleify ] index.js > dist/mb2olstyle.js",
     "doc": "documentation readme -s API index.js",
     "pretest": "eslint src",
     "test": "browserify -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] test/test.js > test/test-bundle.js && mocha test/test-bundle.js && rm test/test-bundle.js"
@@ -59,6 +59,7 @@
     "eslint-config-openlayers": "^7.0.0",
     "jsdom": "^9.12.0",
     "jsdom-global": "^2.1.1",
+    "mkdirp": "^0.5.1",
     "mocha": "^3.2.0",
     "should": "^11.2.1",
     "standalonify": "^0.1.3"
