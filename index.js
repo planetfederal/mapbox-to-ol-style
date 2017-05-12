@@ -399,10 +399,9 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
           }
         }
         if (type != 1) {
-          if (!('line-pattern' in paint) && 'line-color' in paint) {
-            color = colorWithOpacity(
-                paint['line-color'](zoom, properties), paint['line-opacity'](zoom, properties));
-          }
+          color = !('line-pattern' in paint) && 'line-color' in paint ?
+            colorWithOpacity(paint['line-color'](zoom, properties), paint['line-opacity'](zoom, properties)) :
+            undefined;
           var width = paint['line-width'](zoom, properties);
           if (color && width > 0) {
             ++stylesLength;
