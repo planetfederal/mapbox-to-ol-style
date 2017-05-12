@@ -398,7 +398,7 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
             }
           }
         }
-        if (type != 'Point') {
+        if (type != 1) {
           if (!('line-pattern' in paint) && 'line-color' in paint) {
             color = colorWithOpacity(
                 paint['line-color'](zoom, properties), paint['line-opacity'](zoom, properties));
