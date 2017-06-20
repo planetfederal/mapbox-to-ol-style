@@ -352,13 +352,13 @@ export default function(glStyle, source, resolutions, spriteData, spriteImageUrl
     for (var i = 0, ii = layers.length; i < ii; ++i) {
       var layerData = layers[i];
       var layer = layerData.layer;
-      if (('minzoom' in layer && zoom < layer.minzoom) ||
+      var paint = layer.paint;
+      if (paint.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
       if (!layer.filter || layer.filter(f)) {
         var color, opacity, fill, stroke, strokeColor, style, text;
-        var paint = layer.paint;
         var index = layerData.index;
         if (type == 3) {
           if (!('fill-pattern' in paint) && 'fill-color' in paint) {

@@ -46,6 +46,11 @@ describe('mapbox-to-ol-style', function() {
       feature.unset('MALE');
       should(style2(feature, 1)).be.an.Array();
     });
+
+    it('should handle layer visibility', function() {
+      var style = getStyleFunction(states, ['state_names']);
+      should(style(feature, 1)).be.undefined();
+    });
   });
 
 });

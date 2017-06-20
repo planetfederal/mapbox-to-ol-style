@@ -72,6 +72,7 @@
       "source": "states",
       "minzoom": 5,
       "layout": {
+        "visibility": "none",
         "text-field": "{STATE_NAME}",
         "text-size": 12,
         "text-font": ["Arial Normal", "sans-serif Normal"]
