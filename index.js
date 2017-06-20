@@ -15,7 +15,7 @@ import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
 
 var functions = {
-  exponential: [
+  interpolated: [
     'line-miter-limit',
     'fill-opacity',
     'line-opacity',
@@ -29,7 +29,7 @@ var functions = {
     'icon-size',
     'circle-radius'
   ],
-  interval: [
+  'piecewise-constant': [
     'fill-color',
     'fill-outline-color',
     'icon-image',
@@ -95,10 +95,13 @@ function applyLayoutToPaint(layer) {
 }
 
 function convertToFunctions(properties, type) {
+  var propertySpec = {
+    function: type
+  };
   for (var i = 0, ii = functions[type].length; i < ii; ++i) {
     var property = functions[type][i];
     if (property in properties) {
-      properties[property] = glfun(properties[property], type);
+      properties[property] = glfun(properties[property], propertySpec);
     }
   }
 }
@@ -145,8 +148,8 @@ function preprocess(layer, fonts) {
   if (Array.isArray(layer.filter)) {
     layer.filter = createFilter(layer.filter);
   }
-  convertToFunctions(layer.paint, 'exponential');
-  convertToFunctions(layer.paint, 'interval');
+  convertToFunctions(layer.paint, 'interpolated');
+  convertToFunctions(layer.paint, 'piecewise-constant');
 }
 
 function resolveRef(layer, glStyleObj) {
