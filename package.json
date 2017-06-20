@@ -1,6 +1,6 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "Utilities for creating OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
@@ -21,6 +21,10 @@
       "email": "aberenyi@gislab.hu"
     },
     {
+      "name": "Bart van den Eijnden",
+      "email": "bartvde@boundlessgeo.com"
+    },
+    {
       "name": "Dan 'Ducky' Little",
       "email": "danlittle@yahoo.com"
     },
@@ -39,28 +43,28 @@
   ],
   "license": "BSD-2-Clause",
   "scripts": {
-    "prepublish": "npm run doc && mkdirp dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] -g [ bubleify ] index.js > dist/mb2olstyle.js",
+    "prepublish": "npm run doc && mkdirp dist && browserify -g [ babelify --plugins [ add-module-exports transform-es2015-modules-commonjs ] ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] index.js > dist/mb2olstyle.js",
     "doc": "documentation readme -s API index.js",
-    "pretest": "eslint src",
-    "test": "browserify -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] test/test.js > test/test-bundle.js && mocha test/test-bundle.js && rm test/test-bundle.js"
+    "pretest": "eslint src & npm run test-bundle",
+    "test": "phantomjs --local-to-remote-url-access=true ./node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js test/index.html spec '{\"useColors\":true, \"ignoreResourceErrors\": true}'",
+    "test-bundle": "browserify -g [ babelify --plugins [ transform-es2015-modules-commonjs ] ] test/test.js > test/bundle.js"
   },
   "dependencies": {
-    "@mapbox/mapbox-gl-style-spec": "^8.11.0",
+    "@mapbox/mapbox-gl-style-spec": "^9.0.0",
     "mapbox-to-css-font": "^2.0.3",
-    "ol": "^4.1.1"
+    "ol": "^4.2.0"
   },
   "devDependencies": {
     "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.0",
-    "browserify": "^14.1.0",
-    "bubleify": "^0.7.0",
-    "documentation": "^4.0.0-beta.18",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
+    "browserify": "^14.4.0",
+    "documentation": "^4.0.0-rc.1",
     "eslint": "^3.18.0",
     "eslint-config-openlayers": "^7.0.0",
-    "jsdom": "^9.12.0",
-    "jsdom-global": "^2.1.1",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.2.0",
+    "mocha": "^3.4.2",
+    "mocha-phantomjs-core": "^2.1.1",
+    "phantomjs-prebuilt": "^2.1.14",
     "should": "^11.2.1",
     "standalonify": "^0.1.3"
   }

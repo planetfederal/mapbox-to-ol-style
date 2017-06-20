@@ -46,7 +46,7 @@ the specified `source`, which needs to be a `"type": "vector"` or
     from the Mapbox Style object. When a `source` key is provided, all layers for
     the specified source will be included in the style function. When layer `id`s
     are provided, they must be from layers that use the same source.
--   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>?** Resolutions for mapping resolution to zoom level. For tile layers, this can
+-   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>** Resolutions for mapping resolution to zoom level. For tile layers, this can
     be `layer.getSource().getTileGrid().getResolutions()`. (optional, default `[156543.03392804097,
     78271.51696402048,39135.75848201024,19567.87924100512,9783.93962050256,
     4891.96981025128,2445.98490512564,1222.99245256282,611.49622628141,
@@ -54,13 +54,13 @@ the specified `source`, which needs to be a `"type": "vector"` or
     19.109257071294063,9.554628535647032,4.777314267823516,2.388657133911758,
     1.194328566955879,0.5971642834779395,0.29858214173896974,
     0.14929107086948487,0.07464553543474244]`)
--   `spriteData` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)?** Sprite data from the url specified in
+-   `spriteData` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** Sprite data from the url specified in
     the Mapbox Style object's `sprite` property. Only required if a `sprite`
     property is specified in the Mapbox Style object. (optional, default `undefined`)
--   `spriteImageUrl` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)?** Sprite image url for the sprite
+-   `spriteImageUrl` **[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)** Sprite image url for the sprite
     specified in the Mapbox Style object's `sprite` property. Only required if a
     `sprite` property is specified in the Mapbox Style object. (optional, default `undefined`)
--   `fonts` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>?** Array of available fonts, using the
+-   `fonts` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>** Array of available fonts, using the
     same font names as the Mapbox Style object. If not provided, the style
     function will always use the first font from the font array. (optional, default `undefined`)
 
