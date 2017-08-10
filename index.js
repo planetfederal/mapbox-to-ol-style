@@ -382,7 +382,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         canvas.height = Math.ceil((2 * lineWidth + textHeight) * pixelRatio);
         var context = canvas.getContext('2d');
         context.font = textStyle.font;
-        context.textBaseline = 'hanging';
+        context.textBaseline = 'top';
         context.textAlign = 'center';
         context.translate(canvas.width / 2, 0);
         context.scale(pixelRatio, pixelRatio);
