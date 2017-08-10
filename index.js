@@ -342,28 +342,24 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       topRight: topRight
     };
     var instructions = [];
+    var iconX, iconY, img, imgData, scale, width, height;
     if (iconStyle) {
-      var img = iconStyle.img;
-      var imgData = iconStyle.imgData;
-      var scale = iconStyle.scale * pixelRatio;
-      var width = imgData.width;
-      var height = imgData.height;
-      var iconX = coord[0] - width / 2 * scale;
-      var iconY = coord[1] - height / 2 * scale;
+      img = iconStyle.img;
+      scale = iconStyle.scale * pixelRatio;
+      imgData = iconStyle.imgData;
+      width = imgData.width;
+      height = imgData.height;
+      iconX = coord[0] - width / 2 * scale;
+      iconY = coord[1] - height / 2 * scale;
       bottomLeft[0] = iconX;
       bottomLeft[1] = iconY;
       topRight[0] = coord[0] + width / 2 * scale;
       topRight[1] = coord[1] + height / 2 * scale;
-      instructions.push({
-        translate: [iconX, iconY],
-        rotate: iconStyle.rotation,
-        alpha: iconStyle.opacity,
-        drawImage: [img, imgData.x, imgData.y, width, height, 0, 0, width * scale, height * scale]
-      });
     }
+    var canvas, labelX, labelY;
     if (textStyle) {
       var key = [textStyle.font, textStyle.fill, textStyle.stroke, textStyle.lineWidth, textStyle.text].join();
-      var canvas = textCache[key];
+      canvas = textCache[key];
       if (!canvas) {
         // Draw the label to its own canvas and cache it.
         canvas = textCache[key] = document.createElement('CANVAS');
@@ -403,8 +399,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       var textSize = textStyle.textSize * pixelRatio;
       var anchor = textStyle.anchor;
       var offset = textStyle.offset;
-      var labelX = coord[0] - halfWidth + offset[0] * textSize;
-      var labelY = coord[1] - halfHeight + offset[1] * textSize;
+      labelX = coord[0] - halfWidth + offset[0] * textSize;
+      labelY = coord[1] - halfHeight + offset[1] * textSize;
       if (anchor.indexOf('top') != -1) {
         labelY += halfHeight;
       } else if (anchor.indexOf('bottom') != -1) {
@@ -419,14 +415,27 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       bottomLeft[1] = Math.min(bottomLeft[1], labelY);
       topRight[0] = Math.max(topRight[0], labelX + canvas.width);
       topRight[1] = Math.max(topRight[1], labelY + canvas.height);
-      instructions.push({
-        translate: [labelX, labelY],
-        rotate: textStyle.rotation,
-        alpha: textStyle.opacity,
-        drawImage: [canvas, 0, 0]
-      });
     }
-    labelEngine.ingestLabel(bounds, coord.toString(), 1, instructions);
+    var id = bottomLeft.map(Math.round) + ',' + topRight.map(Math.round);
+    if (!labelEngine.getLabel(id)) {
+      if (iconStyle) {
+        instructions.push({
+          translate: [iconX, iconY],
+          rotate: iconStyle.rotation,
+          alpha: iconStyle.opacity,
+          drawImage: [img, imgData.x, imgData.y, width, height, 0, 0, width * scale, height * scale]
+        });
+      }
+      if (textStyle) {
+        instructions.push({
+          translate: [labelX, labelY],
+          rotate: textStyle.rotation,
+          alpha: textStyle.opacity,
+          drawImage: [canvas, 0, 0]
+        });
+      }
+      labelEngine.ingestLabel(bounds, id, 1, instructions);
+    }
   }
 
   var allLayers = glStyle.layers;
