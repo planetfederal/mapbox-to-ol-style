@@ -400,14 +400,25 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       }
       var halfWidth = canvas.width / 2;
       var halfHeight = canvas.height / 2;
-      var offsetX = textStyle.offsetX * pixelRatio;
-      var offsetY = textStyle.offsetY * pixelRatio;
-      var labelX = coord[0] - halfWidth + offsetX;
-      var labelY = coord[1] - halfHeight + offsetY;
+      var textSize = textStyle.textSize * pixelRatio;
+      var anchor = textStyle.anchor;
+      var offset = textStyle.offset;
+      var labelX = coord[0] - halfWidth + offset[0] * textSize;
+      var labelY = coord[1] - halfHeight + offset[1] * textSize;
+      if (anchor.indexOf('top') != -1) {
+        labelY += halfHeight;
+      } else if (anchor.indexOf('bottom') != -1) {
+        labelY -= halfHeight;
+      }
+      if (anchor.indexOf('left') != -1) {
+        labelX += halfWidth;
+      } else if (anchor.indexOf('right') != -1) {
+        labelX -= halfWidth;
+      }
       bottomLeft[0] = Math.min(bottomLeft[0], labelX);
       bottomLeft[1] = Math.min(bottomLeft[1], labelY);
-      topRight[0] = Math.max(topRight[0], coord[0] + halfWidth + offsetX);
-      topRight[1] = Math.max(topRight[1], coord[1] + halfHeight + offsetY);
+      topRight[0] = Math.max(topRight[0], labelX + canvas.width);
+      topRight[1] = Math.max(topRight[1], labelY + canvas.height);
       instructions.push({
         translate: [labelX, labelY],
         rotate: textStyle.rotation,
@@ -537,21 +548,23 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           }
         }
 
-        var icon, iconStyle;
+        var iconStyle;
         if (type == 1 && 'icon-image' in paint) {
           var iconImage = paint['icon-image'](zoom, properties);
-          icon = fromTemplate(iconImage, properties);
-          style = iconImageCache[icon];
-          if (spriteData && spriteImage) {
-            var spriteImageData = spriteData[icon];
-            if (spriteImageData) {
-              iconStyle = {
-                img: spriteImage,
-                imgData: spriteImageData,
-                scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio,
-                rotation: deg2rad(paint['icon-rotate'](zoom, properties)),
-                opacity: paint['icon-opacity'](zoom, properties)
-              };
+          if (iconImage) {
+            var icon = fromTemplate(iconImage, properties);
+            style = iconImageCache[icon];
+            if (spriteData && spriteImage) {
+              var spriteImageData = spriteData[icon];
+              if (spriteImageData) {
+                iconStyle = {
+                  img: spriteImage,
+                  imgData: spriteImageData,
+                  scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio,
+                  rotation: deg2rad(paint['icon-rotate'](zoom, properties)),
+                  opacity: paint['icon-opacity'](zoom, properties)
+                };
+              }
             }
           }
         }
@@ -597,19 +610,12 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
             label = label.toLowerCase();
           }
           var wrappedLabel = wrapText(label, font, paint['text-max-width'](zoom, properties));
-          var offset = paint['text-offset'](zoom, properties);
-          var yOffset = offset[1] * textSize + (wrappedLabel.split('\n').length - 1) * textSize;
-          var anchor = paint['text-anchor'](zoom, properties);
-          if (anchor.indexOf('top') == 0) {
-            yOffset += 0.5 * textSize;
-          } else if (anchor.indexOf('bottom') == 0) {
-            yOffset -= 0.5 * textSize;
-          }
           textStyle = {
             text: wrappedLabel,
             font: font,
-            offsetX: offset[0] * textSize,
-            offsetY: yOffset,
+            textSize: textSize,
+            anchor: paint['text-anchor'](zoom, properties),
+            offset: paint['text-offset'](zoom, properties),
             rotation: deg2rad(paint['text-rotate'](zoom, properties)),
             opacity: paint['text-opacity'](zoom, properties)
           };
@@ -620,7 +626,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           }
         }
 
-        if (icon || (label && type != 2)) {
+        if (iconStyle || textStyle) {
           ++stylesLength;
           style = styles[stylesLength];
           if (!style || !style.getRenderer() || style.getFill() || style.getStroke()) {
