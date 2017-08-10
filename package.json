@@ -1,7 +1,7 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "2.5.2",
-  "description": "Utilities for creating OpenLayers style functions from Mapbox Style objects",
+  "version": "3.0.0",
+  "description": "Utility for creating OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -43,7 +43,8 @@
   ],
   "license": "BSD-2-Clause",
   "scripts": {
-    "prepublish": "npm run doc && mkdirp dist && browserify -g [ babelify  ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text ] ] index.js > dist/mb2olstyle.js",
+    "prepublish": "npm run doc && npm run build",
+    "build": "mkdirp dist && browserify -g [ babelify  ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/circle ol.style.Circle ] ] index.js > dist/mb2olstyle.js && echo 'mb2olstyle=mb2olstyle.default' >> dist/mb2olstyle.js",
     "doc": "documentation readme -s API index.js",
     "pretest": "eslint src & npm run test-bundle",
     "test": "phantomjs --local-to-remote-url-access=true ./node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js test/index.html spec '{\"useColors\":true, \"ignoreResourceErrors\": true}'",
@@ -51,15 +52,17 @@
   },
   "dependencies": {
     "@mapbox/mapbox-gl-style-spec": "^9.0.0",
+    "labelgun": "^0.1.1",
     "mapbox-to-css-font": "^2.0.3",
-    "ol": "^4.2.0"
+    "ol": "^4.3.0-beta.3"
   },
   "devDependencies": {
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
     "babel-preset-es2015": "^6.24.1",
+    "babelify": "^7.3.0",
     "browserify": "^14.4.0",
-    "documentation": "^4.0.0-rc.1",
+    "documentation": "^4.0.0",
     "eslint": "^3.18.0",
     "eslint-config-openlayers": "^7.0.0",
     "mkdirp": "^0.5.1",

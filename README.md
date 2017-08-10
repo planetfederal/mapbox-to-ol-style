@@ -1,6 +1,6 @@
 # mapbox-to-ol-style
 
-Utilities for creating OpenLayers style functions from Mapbox Style objects.
+Utility for creating OpenLayers style functions from Mapbox Style objects.
 
 ## Getting started
 
@@ -24,7 +24,7 @@ var layer = new VectorLayer({
 
 fetch('data/states.json').then(function(response) {
   response.json().then(function(glStyle) {
-    layer.setStyle(mb2olstyle(glStyle, 'states'));
+    mb2olstyle(layer, glStyle, 'states');
   });
 });
 ```
@@ -37,17 +37,17 @@ fetch('data/states.json').then(function(response) {
 
 Creates a style function from the `glStyle` object for all layers that use
 the specified `source`, which needs to be a `"type": "vector"` or
-`"type": "geojson"` source.
+`"type": "geojson"` source and applies it to the specified OpenLayers layer.
 
 **Parameters**
 
+-   `olLayer` **(ol.layer.Vector | ol.layer.VectorTile)** OpenLayers layer.
 -   `glStyle` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object))** Mapbox Style object.
 -   `source` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>)** `source` key or an array of layer `id`s
     from the Mapbox Style object. When a `source` key is provided, all layers for
     the specified source will be included in the style function. When layer `id`s
     are provided, they must be from layers that use the same source.
--   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>** Resolutions for mapping resolution to zoom level. For tile layers, this can
-    be `layer.getSource().getTileGrid().getResolutions()`. (optional, default `[156543.03392804097,
+-   `resolutions` **[Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)>** Resolutions for mapping resolution to zoom level. (optional, default `[156543.03392804097,
     78271.51696402048,39135.75848201024,19567.87924100512,9783.93962050256,
     4891.96981025128,2445.98490512564,1222.99245256282,611.49622628141,
     305.748113140705,152.8740565703525,76.43702828517625,38.21851414258813,
