@@ -302,15 +302,15 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   var ctx = document.createElement('CANVAS').getContext('2d');
   var measureCache = {};
   function wrapText(text, font, em) {
-    var key = em + font + text;
-    var wrappedText = measureCache[key];
-    if (!wrappedText) {
+    var key = [em, font, text].join();
+    var lines = measureCache[key];
+    if (!lines) {
       ctx.font = font;
       var oneEm = ctx.measureText('M').width;
       var width = oneEm * em;
       var words = text.split(' ');
       var line = '';
-      var lines = [];
+      lines = [];
       for (var i = 0, ii = words.length; i < ii; ++i) {
         var word = words[i];
         if ((ctx.measureText(line + word).width <= width)) {
@@ -325,13 +325,13 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       if (line) {
         lines.push(line);
       }
-      wrappedText = lines.join('\n');
-      measureCache[key] = wrappedText;
+      measureCache[key] = lines;
     }
-    return wrappedText;
+    return lines;
   }
 
   var textCache = {};
+  var gutter;
   var labelEngine = new labelgun(voidFn, voidFn);
   function createIconLabelCombo(iconStyle, textStyle, coord, state) {
     var pixelRatio = state.pixelRatio;
@@ -361,10 +361,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       var key = [textStyle.font, textStyle.fill, textStyle.stroke, textStyle.lineWidth, textStyle.text].join();
       canvas = textCache[key];
       if (!canvas) {
-        // Draw the label to its own canvas and cache it.
-        canvas = textCache[key] = document.createElement('CANVAS');
+        // Render label to a separate canvas, to be reused with ctx.drawImage
         ctx.font = textStyle.font;
-        var lines = textStyle.text.split('\n');
+        var lines = textStyle.lines;
         var lineHeight = ctx.measureText('M').width * 1.5;
         var textWidth = 0;
         var textHeight = 0;
@@ -374,6 +373,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           textHeight += lineHeight;
         }
         var lineWidth = textStyle.lineWidth;
+        canvas = textCache[key] = document.createElement('CANVAS');
         canvas.width = Math.ceil((2 * lineWidth + textWidth) * pixelRatio);
         canvas.height = Math.ceil((2 * lineWidth + textHeight) * pixelRatio);
         var context = canvas.getContext('2d');
@@ -394,8 +394,10 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           }
         }
       }
-      var halfWidth = canvas.width / 2;
-      var halfHeight = canvas.height / 2;
+      var canvasWidth = canvas.width;
+      var canvasHeight = canvas.height;
+      var halfWidth = canvasWidth / 2;
+      var halfHeight = canvasHeight / 2;
       var textSize = textStyle.textSize * pixelRatio;
       var anchor = textStyle.anchor;
       var offset = textStyle.offset;
@@ -413,28 +415,33 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       }
       bottomLeft[0] = Math.min(bottomLeft[0], labelX);
       bottomLeft[1] = Math.min(bottomLeft[1], labelY);
-      topRight[0] = Math.max(topRight[0], labelX + canvas.width);
-      topRight[1] = Math.max(topRight[1], labelY + canvas.height);
+      topRight[0] = Math.max(topRight[0], labelX + canvasWidth);
+      topRight[1] = Math.max(topRight[1], labelY + canvasHeight);
     }
-    var id = bottomLeft.map(Math.round) + ',' + topRight.map(Math.round);
-    if (!labelEngine.getLabel(id)) {
-      if (iconStyle) {
-        instructions.push({
-          translate: [iconX, iconY],
-          rotate: iconStyle.rotation,
-          alpha: iconStyle.opacity,
-          drawImage: [img, imgData.x, imgData.y, width, height, 0, 0, width * scale, height * scale]
-        });
+    var target = state.context.canvas;
+    if (0 <= topRight[0] && target.width >= bottomLeft[0] && 0 <= topRight[1] && target.height >= bottomLeft[1]) {
+      var id = [bottomLeft.map(Math.round), topRight.map(Math.round)].join();
+      if (!labelEngine.getLabel(id)) {
+        if (iconStyle) {
+          instructions.push({
+            translate: [iconX, iconY],
+            rotate: iconStyle.rotation,
+            alpha: iconStyle.opacity,
+            drawImage: [img, imgData.x, imgData.y, width, height, 0, 0, width * scale, height * scale]
+          });
+        }
+        if (textStyle) {
+          instructions.push({
+            translate: [labelX, labelY],
+            rotate: textStyle.rotation,
+            alpha: textStyle.opacity,
+            drawImage: [canvas, 0, 0]
+          });
+        }
+        gutter[0] = Math.max(gutter[0], (topRight[0] - bottomLeft[0]) / 2);
+        gutter[1] = Math.max(gutter[1], (topRight[1] - bottomLeft[1]) / 2);
+        labelEngine.ingestLabel(bounds, id, 1, instructions);
       }
-      if (textStyle) {
-        instructions.push({
-          translate: [labelX, labelY],
-          rotate: textStyle.rotation,
-          alpha: textStyle.opacity,
-          drawImage: [canvas, 0, 0]
-        });
-      }
-      labelEngine.ingestLabel(bounds, id, 1, instructions);
     }
   }
 
@@ -618,9 +625,10 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           } else if (textTransform == 'lowercase') {
             label = label.toLowerCase();
           }
-          var wrappedLabel = wrapText(label, font, paint['text-max-width'](zoom, properties));
+          var lines = wrapText(label, font, paint['text-max-width'](zoom, properties));
           textStyle = {
-            text: wrappedLabel,
+            text: label,
+            lines: lines,
             font: font,
             textSize: textSize,
             anchor: paint['text-anchor'](zoom, properties),
@@ -642,7 +650,14 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
             style = styles[stylesLength] = new Style();
           }
           style.setRenderer(function(coords, state) {
-            createIconLabelCombo(iconStyle, textStyle, coords, state);
+            var canvas = state.context.canvas;
+            if (!gutter) {
+              var pixelRatio = state.pixelRatio;
+              gutter = [50 * pixelRatio, 20 * pixelRatio];
+            }
+            if (coords[0] > -gutter[0] && coords[1] > -gutter[1] && coords[0] < canvas.width + gutter[0] && coords[1] < canvas.height + gutter[1]) {
+              createIconLabelCombo(iconStyle, textStyle, coords, state);
+            }
           });
           var geometry = feature.getGeometry();
           if (geometry.getType() == 'Polygon') {
