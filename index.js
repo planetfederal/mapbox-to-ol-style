@@ -419,8 +419,20 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       topRight[1] = Math.max(topRight[1], labelY + canvasHeight);
     }
     var target = state.context.canvas;
-    if (0 <= topRight[0] && target.width >= bottomLeft[0] && 0 <= topRight[1] && target.height >= bottomLeft[1]) {
-      var id = [bottomLeft.map(Math.round), topRight.map(Math.round)].join();
+    if (0 <= topRight[0] && target.width >= bottomLeft[0] &&
+        0 <= topRight[1] && target.height >= bottomLeft[1]) {
+      // assume labels are identical when bbox has same width and height, and
+      // text and icon are the same
+      var id = [
+        Math.round(topRight[0] - bottomLeft[0]), Math.round(topRight[1] - bottomLeft[1]),
+        iconStyle && iconStyle.icon, textStyle && textStyle.text].join();
+      var previous = labelEngine.getLabel(id);
+      // when bbox of identical previous label and current label do not overlap,
+      // consider label again by using a different id
+      if (previous && !(previous.minX <= topRight[0] && previous.maxX >= bottomLeft[0] &&
+          previous.minY <= topRight[1] && previous.maxY >= bottomLeft[1])) {
+        id += '_';
+      }
       if (!labelEngine.getLabel(id)) {
         if (iconStyle) {
           instructions.push({

@@ -1,6 +1,6 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "3.1.3",
+  "version": "3.1.4",
   "description": "Utility for creating OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
