@@ -11,7 +11,7 @@ import Circle from 'ol/style/circle';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
-import labelgun from 'labelgun';
+import labelgun from 'labelgun/src/labelgun';
 
 var functions = {
   interpolated: [
@@ -302,7 +302,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   var ctx = document.createElement('CANVAS').getContext('2d');
   var measureCache = {};
   function wrapText(text, font, em) {
-    var key = [em, font, text].join();
+    var key = em + ',' + font + ',' + text;
     var lines = measureCache[key];
     if (!lines) {
       ctx.font = font;
@@ -331,9 +331,10 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   }
 
   var textCache = {};
+  var labels;
   var gutter;
   var labelEngine = new labelgun(voidFn, voidFn);
-  function createIconLabelCombo(iconStyle, textStyle, coord, state) {
+  function createIconLabelCombo(iconStyle, textStyle, coord, state, weight) {
     var pixelRatio = state.pixelRatio;
     var bottomLeft = [Infinity, Infinity];
     var topRight = [-Infinity, -Infinity];
@@ -358,7 +359,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     }
     var canvas, labelX, labelY;
     if (textStyle) {
-      var key = [textStyle.font, textStyle.fill, textStyle.stroke, textStyle.lineWidth, textStyle.text].join();
+      var key = textStyle.font + ',' + textStyle.fill + ',' + textStyle.stroke + ',' +
+          textStyle.lineWidth + ',' + textStyle.text;
       canvas = textCache[key];
       if (!canvas) {
         // Render label to a separate canvas, to be reused with ctx.drawImage
@@ -423,17 +425,17 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         0 <= topRight[1] && target.height >= bottomLeft[1]) {
       // assume labels are identical when bbox has same width and height, and
       // text and icon are the same
-      var id = [
-        Math.round(topRight[0] - bottomLeft[0]), Math.round(topRight[1] - bottomLeft[1]),
-        iconStyle && iconStyle.icon, textStyle && textStyle.text].join();
-      var previous = labelEngine.getLabel(id);
+      var id =
+        Math.round(topRight[0] - bottomLeft[0]) + ',' + Math.round(topRight[1] - bottomLeft[1]) + ',' +
+        (iconStyle && iconStyle.icon) + ',' + (textStyle && textStyle.text);
+      var previous = id in labels && labels[id][0];
       // when bbox of identical previous label and current label do not overlap,
       // consider label again by using a different id
-      if (previous && !(previous.minX <= topRight[0] && previous.maxX >= bottomLeft[0] &&
-          previous.minY <= topRight[1] && previous.maxY >= bottomLeft[1])) {
+      if (previous && !(previous.bottomLeft[0] <= topRight[0] && previous.topRight[0] >= bottomLeft[0] &&
+          previous.bottomLeft[1] <= topRight[1] && previous.topRight[1] >= bottomLeft[1])) {
         id += '_';
       }
-      if (!labelEngine.getLabel(id)) {
+      if (!(id in labels)) {
         if (iconStyle) {
           instructions.push({
             translate: [iconX, iconY],
@@ -452,7 +454,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         }
         gutter[0] = Math.max(gutter[0], (topRight[0] - bottomLeft[0]) / 2);
         gutter[1] = Math.max(gutter[1], (topRight[1] - bottomLeft[1]) / 2);
-        labelEngine.ingestLabel(bounds, id, 1, instructions);
+        labels[id] = ([bounds, id, weight, instructions]);
       }
     }
   }
@@ -668,7 +670,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
               gutter = [50 * pixelRatio, 20 * pixelRatio];
             }
             if (coords[0] > -gutter[0] && coords[1] > -gutter[1] && coords[0] < canvas.width + gutter[0] && coords[1] < canvas.height + gutter[1]) {
-              createIconLabelCombo(iconStyle, textStyle, coords, state);
+              createIconLabelCombo(iconStyle, textStyle, coords, state, index);
             }
           });
           var geometry = feature.getGeometry();
@@ -692,11 +694,33 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   });
   olLayer.on('precompose', function() {
     labelEngine.destroy();
+    labels = {};
   });
+  function labelSort(a, b) {
+    a = labels[a];
+    b = labels[b];
+    var weightA = a[2];
+    var weightB = b[2];
+    var boxA = a[0];
+    var boxB = b[0];
+    var distA = Math.pow(boxA.bottomLeft[0], 2) + Math.pow(boxA.bottomLeft[1], 2);
+    var distB = Math.pow(boxB.bottomLeft[0], 2) + Math.pow(boxB.bottomLeft[1], 2);
+    if (weightA == weightB) {
+      return distA - distB;
+    } else {
+      return weightA - weightB;
+    }
+  }
   olLayer.on('postcompose', function(e) {
     var context = e.context;
+    var keys = Object.keys(labels);
+    keys.sort(labelSort);
+    var i, ii;
+    for (i = 0, ii = keys.length; i < ii; ++i) {
+      labelEngine.ingestLabel.apply(labelEngine, labels[keys[i]]);
+    }
     var items = labelEngine.getShown();
-    for (var i = 0, ii = items.length; i < ii; ++i) {
+    for (i = 0, ii = items.length; i < ii; ++i) {
       var item = items[i];
       var instructions = item.labelObject;
       for (var j = 0, jj = instructions.length; j < jj; ++j) {
