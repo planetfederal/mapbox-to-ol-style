@@ -357,11 +357,11 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       topRight[0] = coord[0] + width / 2 * scale;
       topRight[1] = coord[1] + height / 2 * scale;
     }
-    var canvas, labelX, labelY;
+    var canvas, labelX, labelY, textKey;
     if (textStyle) {
-      var key = textStyle.font + ',' + textStyle.fill + ',' + textStyle.stroke + ',' +
+      textKey = textStyle.font + ',' + textStyle.fill + ',' + textStyle.stroke + ',' +
           textStyle.lineWidth + ',' + textStyle.text;
-      canvas = textCache[key];
+      canvas = textCache[textKey];
       if (!canvas) {
         // Render label to a separate canvas, to be reused with ctx.drawImage
         ctx.font = textStyle.font;
@@ -375,7 +375,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           textHeight += lineHeight;
         }
         var lineWidth = textStyle.lineWidth;
-        canvas = textCache[key] = document.createElement('CANVAS');
+        canvas = textCache[textKey] = document.createElement('CANVAS');
         canvas.width = Math.ceil((2 * lineWidth + textWidth) * pixelRatio);
         canvas.height = Math.ceil((2 * lineWidth + textHeight) * pixelRatio);
         var context = canvas.getContext('2d');
@@ -423,17 +423,23 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     var target = state.context.canvas;
     if (0 <= topRight[0] && target.width >= bottomLeft[0] &&
         0 <= topRight[1] && target.height >= bottomLeft[1]) {
-      // assume labels are identical when bbox has same width and height, and
-      // text and icon are the same
-      var id =
-        Math.round(topRight[0] - bottomLeft[0]) + ',' + Math.round(topRight[1] - bottomLeft[1]) + ',' +
-        (iconStyle && iconStyle.icon) + ',' + (textStyle && textStyle.text);
-      var previous = id in labels && labels[id][0];
-      // when bbox of identical previous label and current label do not overlap,
-      // consider label again by using a different id
-      if (previous && !(previous.bottomLeft[0] <= topRight[0] && previous.topRight[0] >= bottomLeft[0] &&
-          previous.bottomLeft[1] <= topRight[1] && previous.topRight[1] >= bottomLeft[1])) {
-        id += '_';
+      var id = (iconStyle && iconStyle.icon) + ',' + textKey;
+      if (id in labels) {
+        var testId = id;
+        var found = true;
+        do {
+          var previous = labels[testId][0];
+          // when bbox of identical previous label and current label do not overlap,
+          // consider label again by using a different id
+          if (previous && (previous.bottomLeft[0] <= topRight[0] && previous.topRight[0] >= bottomLeft[0] &&
+              previous.bottomLeft[1] <= topRight[1] && previous.topRight[1] >= bottomLeft[1])) {
+            found = false;
+          }
+          testId += '_';
+        } while (testId in labels);
+        if (found) {
+          id = testId;
+        }
       }
       if (!(id in labels)) {
         if (iconStyle) {
@@ -588,6 +594,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
               var spriteImageData = spriteData[icon];
               if (spriteImageData) {
                 iconStyle = {
+                  icon: icon,
                   img: spriteImage,
                   imgData: spriteImageData,
                   scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio,
