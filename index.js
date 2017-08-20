@@ -724,7 +724,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     keys.sort(labelSort);
     var i, ii;
     for (i = 0, ii = keys.length; i < ii; ++i) {
-      labelEngine.ingestLabel.apply(labelEngine, labels[keys[i]]);
+      var args = labels[keys[i]];
+      args[2] = 1; // reset weight
+      labelEngine.ingestLabel.apply(labelEngine, args);
     }
     var items = labelEngine.getShown();
     for (i = 0, ii = items.length; i < ii; ++i) {
