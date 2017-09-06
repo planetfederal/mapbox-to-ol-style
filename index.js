@@ -700,7 +700,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     textCache = {};
   });
   olLayer.on('precompose', function() {
-    labelEngine.destroy();
+    labelEngine.reset();
     labels = {};
   });
   function labelSort(a, b) {

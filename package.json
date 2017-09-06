@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@mapbox/mapbox-gl-style-spec": "^9.0.0",
-    "labelgun": "^0.1.1",
+    "labelgun": "^6.0.0",
     "mapbox-to-css-font": "^2.0.3",
     "ol": "^4.3.1"
   },
