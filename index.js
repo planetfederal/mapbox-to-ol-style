@@ -29,7 +29,8 @@ var functions = {
     'icon-rotate',
     'icon-size',
     'circle-radius',
-    'circle-opacity'
+    'circle-opacity',
+    'circle-stroke-width'
   ],
   'piecewise-constant': [
     'fill-color',
@@ -71,7 +72,8 @@ var defaults = {
   'icon-size': 1,
   'circle-color': '#000000',
   'circle-stroke-color': '#000000',
-  'circle-opacity': 1
+  'circle-opacity': 1,
+  'circle-stroke-width': 0
 };
 
 var types = {
@@ -615,14 +617,16 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           var circleStrokeColor = paint['circle-stroke-color'](zoom, properties);
           var circleColor = paint['circle-color'](zoom, properties);
           var circleOpacity = paint['circle-opacity'](zoom, properties);
+          var circleStrokeWidth = paint['circle-stroke-width'](zoom, properties);
           var cache_key = circleRadius + '.' + circleStrokeColor + '.' +
-            circleColor + '.' + circleOpacity;
+            circleColor + '.' + circleOpacity + '.' + circleStrokeWidth;
           style = iconImageCache[cache_key];
           if (!style) {
             style = new Style({
               image: new Circle({
                 radius: circleRadius,
-                stroke: new Stroke({
+                stroke: circleStrokeWidth === 0 ? undefined : new Stroke({
+                  width: circleStrokeWidth,
                   color: colorWithOpacity(circleStrokeColor, circleOpacity)
                 }),
                 fill: new Fill({
