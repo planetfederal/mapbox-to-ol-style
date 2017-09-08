@@ -30,7 +30,8 @@ var functions = {
     'icon-size',
     'circle-radius',
     'circle-opacity',
-    'circle-stroke-width'
+    'circle-stroke-width',
+    'circle-color'
   ],
   'piecewise-constant': [
     'fill-color',
@@ -45,7 +46,6 @@ var functions = {
     'text-field',
     'text-font',
     'text-halo-color',
-    'circle-color',
     'circle-stroke-color'
   ]
 };
