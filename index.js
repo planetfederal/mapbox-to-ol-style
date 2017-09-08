@@ -28,7 +28,8 @@ var functions = {
     'icon-opacity',
     'icon-rotate',
     'icon-size',
-    'circle-radius'
+    'circle-radius',
+    'circle-opacity'
   ],
   'piecewise-constant': [
     'fill-color',
@@ -69,7 +70,8 @@ var defaults = {
   'icon-rotate': 0,
   'icon-size': 1,
   'circle-color': '#000000',
-  'circle-stroke-color': '#000000'
+  'circle-stroke-color': '#000000',
+  'circle-opacity': 1
 };
 
 var types = {
@@ -609,19 +611,22 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         if (type == 1 && 'circle-radius' in paint) {
           // TODO Send circles through createIconLabelCombo
           ++stylesLength;
-          var cache_key = paint['circle-radius'](zoom, properties) + '.' +
-            paint['circle-stroke-color'](zoom, properties) + '.' +
-            paint['circle-color'](zoom, properties);
+          var circleRadius = paint['circle-radius'](zoom, properties);
+          var circleStrokeColor = paint['circle-stroke-color'](zoom, properties);
+          var circleColor = paint['circle-color'](zoom, properties);
+          var circleOpacity = paint['circle-opacity'](zoom, properties);
+          var cache_key = circleRadius + '.' + circleStrokeColor + '.' +
+            circleColor + '.' + circleOpacity;
           style = iconImageCache[cache_key];
           if (!style) {
             style = new Style({
               image: new Circle({
-                radius: paint['circle-radius'](zoom, properties),
+                radius: circleRadius,
                 stroke: new Stroke({
-                  color: colorWithOpacity(paint['circle-stroke-color'](zoom, properties), opacity)
+                  color: colorWithOpacity(circleStrokeColor, circleOpacity)
                 }),
                 fill: new Fill({
-                  color: colorWithOpacity(paint['circle-color'](zoom, properties), opacity)
+                  color: colorWithOpacity(circleColor, circleOpacity)
                 })
               })
             });
