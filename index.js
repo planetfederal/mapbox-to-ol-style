@@ -31,22 +31,22 @@ var functions = {
     'circle-radius',
     'circle-opacity',
     'circle-stroke-width',
-    'circle-color'
+    'circle-color',
+    'circle-stroke-color',
+    'text-halo-color',
+    'text-color',
+    'line-color',
+    'fill-outline-color',
+    'fill-color'
   ],
   'piecewise-constant': [
-    'fill-color',
-    'fill-outline-color',
     'icon-image',
     'line-cap',
-    'line-color',
     'line-join',
     'line-dasharray',
     'text-anchor',
-    'text-color',
     'text-field',
-    'text-font',
-    'text-halo-color',
-    'circle-stroke-color'
+    'text-font'
   ]
 };
 
@@ -110,6 +110,7 @@ function convertToFunctions(properties, type) {
   for (var i = 0, ii = functions[type].length; i < ii; ++i) {
     var property = functions[type][i];
     if (property in properties) {
+      propertySpec.type = property.indexOf('color') !== -1 ? 'color' : undefined;
       properties[property] = glfun(properties[property], propertySpec);
     }
   }
@@ -201,13 +202,25 @@ function colorWithOpacity(color, opacity) {
   if (color && opacity !== undefined) {
     var colorData = colorCache[color];
     if (!colorData) {
-      colorElement.style.color = color;
-      document.body.appendChild(colorElement);
-      var colorString = getComputedStyle(colorElement).getPropertyValue('color');
-      document.body.removeChild(colorElement);
-      var colorArray = colorString.match(colorRegEx)[1].split(',').map(Number);
-      if (colorArray.length == 3) {
-        colorArray.push(1);
+      var colorArray;
+      if (Array.isArray(color)) {
+        colorArray = [];
+        for (var i = 0, ii = color.length; i < ii; i++) {
+          if (i < 3) {
+            colorArray.push(255 * color[i]);
+          } else {
+            colorArray.push(color[i]);
+          }
+        }
+      } else {
+        colorElement.style.color = color;
+        document.body.appendChild(colorElement);
+        var colorString = getComputedStyle(colorElement).getPropertyValue('color');
+        document.body.removeChild(colorElement);
+        colorArray = colorString.match(colorRegEx)[1].split(',').map(Number);
+        if (colorArray.length == 3) {
+          colorArray.push(1);
+        }
       }
       colorCache[color] = colorData = {
         color: colorArray,
