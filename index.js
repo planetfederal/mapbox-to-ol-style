@@ -460,7 +460,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         }
         gutter[0] = Math.max(gutter[0], (topRight[0] - bottomLeft[0]) / 2);
         gutter[1] = Math.max(gutter[1], (topRight[1] - bottomLeft[1]) / 2);
-        labels[id] = ([bounds, id, weight, instructions]);
+        labels[id] = [bounds, id, weight, instructions];
       }
     }
   }
@@ -728,6 +728,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       args[2] = 1; // reset weight
       labelEngine.ingestLabel.apply(labelEngine, args);
     }
+    labelEngine.update();
     var items = labelEngine.getShown();
     for (i = 0, ii = items.length; i < ii; ++i) {
       var item = items[i];
