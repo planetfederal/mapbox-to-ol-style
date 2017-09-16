@@ -703,21 +703,12 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     labelEngine.reset();
     labels = {};
   });
+
   function labelSort(a, b) {
-    a = labels[a];
-    b = labels[b];
-    var weightA = a[2];
-    var weightB = b[2];
-    var boxA = a[0];
-    var boxB = b[0];
-    var distA = Math.pow(boxA.bottomLeft[0], 2) + Math.pow(boxA.bottomLeft[1], 2);
-    var distB = Math.pow(boxB.bottomLeft[0], 2) + Math.pow(boxB.bottomLeft[1], 2);
-    if (weightA == weightB) {
-      return distA - distB;
-    } else {
-      return weightA - weightB;
-    }
+    //Weight A - B
+    return labels[a][2] - labels[b][2];
   }
+
   olLayer.on('postcompose', function(e) {
     var context = e.context;
     var keys = Object.keys(labels);
@@ -725,9 +716,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     var i, ii;
     for (i = 0, ii = keys.length; i < ii; ++i) {
       var args = labels[keys[i]];
-      args[2] = 1; // reset weight
       labelEngine.ingestLabel.apply(labelEngine, args);
     }
+    
     labelEngine.update();
     var items = labelEngine.getShown();
     for (i = 0, ii = items.length; i < ii; ++i) {
