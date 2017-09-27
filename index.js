@@ -740,7 +740,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       var args = labels[keys[i]];
       labelEngine.ingestLabel.apply(labelEngine, args);
     }
-    
+
     labelEngine.update();
     var items = labelEngine.getShown();
     for (i = 0, ii = items.length; i < ii; ++i) {
