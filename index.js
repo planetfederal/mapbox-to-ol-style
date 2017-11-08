@@ -572,13 +572,19 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           text.setFont(font);
           text.setRotation(deg2rad(paint['text-rotate'](zoom, properties)));
           var textAnchor = paint['text-anchor'](zoom, properties);
-          var textAlign = 'center';
-          if (textAnchor.indexOf('left') !== -1) {
-            textAlign = 'left';
-          } else if (textAnchor.indexOf('right') !== -1) {
-            textAlign = 'right';
+          var placement = (hasImage || type == 1) ? 'point' : paint['symbol-placement'](zoom, properties);
+          text.setPlacement(placement);
+          if (placement == 'point') {
+            var textAlign = 'center';
+            if (textAnchor.indexOf('left') !== -1) {
+              textAlign = 'left';
+            } else if (textAnchor.indexOf('right') !== -1) {
+              textAlign = 'right';
+            }
+            text.setTextAlign(textAlign);
+          } else {
+            text.setTextAlign();
           }
-          text.setTextAlign(textAlign);
           var textBaseline = 'middle';
           if (textAnchor.indexOf('bottom') == 0) {
             textBaseline = 'bottom';
@@ -589,8 +595,6 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           var textOffset = paint['text-offset'](zoom, properties);
           text.setOffsetX(textOffset[0] * textSize);
           text.setOffsetY(textOffset[1] * textSize);
-          text.setPlacement(
-              (hasImage || type == 1) ? 'point' : paint['symbol-placement'](zoom, properties));
           opacity = paint['text-opacity'](zoom, properties);
           textColor.setColor(
               colorWithOpacity(paint['text-color'](zoom, properties), opacity));
