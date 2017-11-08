@@ -7,11 +7,13 @@ License: https://raw.githubusercontent.com/boundlessgeo/mapbox-to-ol-style/maste
 import Style from 'ol/style/style';
 import Fill from 'ol/style/fill';
 import Stroke from 'ol/style/stroke';
+import Icon from 'ol/style/icon';
+import Text from 'ol/style/text';
 import Circle from 'ol/style/circle';
+import Point from 'ol/geom/point';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
-import labelgun from 'labelgun/src/labelgun';
 
 var functions = {
   interpolated: [
@@ -44,6 +46,7 @@ var functions = {
     'line-cap',
     'line-join',
     'line-dasharray',
+    'symbol-placement',
     'text-anchor',
     'text-field',
     'text-font'
@@ -57,6 +60,7 @@ var defaults = {
   'line-miter-limit': 2,
   'line-opacity': 1,
   'line-width': 1,
+  'symbol-placement': 'point',
   'text-anchor': 'center',
   'text-color': '#000000',
   'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
@@ -85,8 +89,6 @@ var types = {
   'MultiPolygon': 3
 };
 
-function voidFn() {}
-
 function applyDefaults(properties) {
   for (var property in defaults) {
     if (!(property in properties)) {
@@ -110,8 +112,11 @@ function convertToFunctions(properties, type) {
   for (var i = 0, ii = functions[type].length; i < ii; ++i) {
     var property = functions[type][i];
     if (property in properties) {
-      propertySpec.type = property.indexOf('color') !== -1 ? 'color' : undefined;
-      properties[property] = glfun(properties[property], propertySpec);
+      var value = properties[property];
+      if (property.indexOf('color') !== -1) {
+        propertySpec.type = 'color';
+      }
+      properties[property] = glfun(value, propertySpec);
     }
   }
 }
@@ -194,37 +199,19 @@ function getZoomForResolution(resolution, resolutions) {
   return ii - 1;
 }
 
-var colorElement = document.createElement('div');
-var colorRegEx = /^rgba?\((.*)\)$/;
 var colorCache = {};
-
 function colorWithOpacity(color, opacity) {
   if (color && opacity !== undefined) {
     var colorData = colorCache[color];
     if (!colorData) {
-      var colorArray;
-      if (Array.isArray(color)) {
-        colorArray = [];
-        for (var i = 0, ii = color.length; i < ii; i++) {
-          if (i < 3) {
-            colorArray.push(255 * color[i]);
-          } else {
-            colorArray.push(color[i]);
-          }
-        }
-      } else {
-        colorElement.style.color = color;
-        document.body.appendChild(colorElement);
-        var colorString = getComputedStyle(colorElement).getPropertyValue('color');
-        document.body.removeChild(colorElement);
-        colorArray = colorString.match(colorRegEx)[1].split(',').map(Number);
-        if (colorArray.length == 3) {
-          colorArray.push(1);
-        }
-      }
       colorCache[color] = colorData = {
-        color: colorArray,
-        opacity: colorArray[3]
+        color: [
+          color[0] * 255 / color[3],
+          color[1] * 255 / color[3],
+          color[2] * 255 / color[3],
+          color[3]
+        ],
+        opacity: color[3]
       };
     }
     color = colorData.color;
@@ -251,13 +238,6 @@ function fromTemplate(text, properties) {
     return text;
   }
 }
-
-function sortByWidth(a, b) {
-  var extentA = a.getExtent();
-  var extentB = b.getExtent();
-  return (extentB[2] - extentB[0]) - (extentA[2] - extentA[0]);
-}
-
 
 /**
  * Creates a style function from the `glStyle` object for all layers that use
@@ -306,11 +286,12 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     throw new Error('glStyle version 8 required.');
   }
 
-  var spriteImage;
+  var spriteImage, spriteImgSize;
   if (spriteImageUrl) {
     var img = new Image();
     img.onload = function() {
       spriteImage = img;
+      spriteImgSize = [img.width, img.height];
       olLayer.changed();
     };
     img.src = spriteImageUrl;
@@ -320,14 +301,14 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   var measureCache = {};
   function wrapText(text, font, em) {
     var key = em + ',' + font + ',' + text;
-    var lines = measureCache[key];
-    if (!lines) {
+    var wrappedText = measureCache[key];
+    if (!wrappedText) {
       ctx.font = font;
       var oneEm = ctx.measureText('M').width;
       var width = oneEm * em;
       var words = text.split(' ');
       var line = '';
-      lines = [];
+      var lines = [];
       for (var i = 0, ii = words.length; i < ii; ++i) {
         var word = words[i];
         if ((ctx.measureText(line + word).width <= width)) {
@@ -342,144 +323,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       if (line) {
         lines.push(line);
       }
-      measureCache[key] = lines;
+      measureCache[key] = wrappedText = lines.join('\n');
     }
-    return lines;
-  }
-
-  var textCache = {};
-  var labels;
-  var gutter;
-  var labelEngine = new labelgun(voidFn, voidFn);
-  function createIconLabelCombo(iconStyle, textStyle, coord, state, weight) {
-    var pixelRatio = state.pixelRatio;
-    var bottomLeft = [Infinity, Infinity];
-    var topRight = [-Infinity, -Infinity];
-    var bounds = {
-      bottomLeft: bottomLeft,
-      topRight: topRight
-    };
-    var instructions = [];
-    var iconX, iconY, img, imgData, scale, width, height;
-    if (iconStyle) {
-      img = iconStyle.img;
-      scale = iconStyle.scale * pixelRatio;
-      imgData = iconStyle.imgData;
-      width = imgData.width;
-      height = imgData.height;
-      iconX = coord[0] - width / 2 * scale;
-      iconY = coord[1] - height / 2 * scale;
-      bottomLeft[0] = iconX;
-      bottomLeft[1] = iconY;
-      topRight[0] = coord[0] + width / 2 * scale;
-      topRight[1] = coord[1] + height / 2 * scale;
-    }
-    var canvas, labelX, labelY, textKey;
-    if (textStyle) {
-      textKey = textStyle.font + ',' + textStyle.fill + ',' + textStyle.stroke + ',' +
-          textStyle.lineWidth + ',' + textStyle.text;
-      canvas = textCache[textKey];
-      if (!canvas) {
-        // Render label to a separate canvas, to be reused with ctx.drawImage
-        ctx.font = textStyle.font;
-        var lines = textStyle.lines;
-        var lineHeight = ctx.measureText('M').width * 1.5;
-        var textWidth = 0;
-        var textHeight = 0;
-        var i = 0, ii = lines.length;
-        for (; i < ii; ++i) {
-          textWidth = Math.max(textWidth, ctx.measureText(lines[i]).width);
-          textHeight += lineHeight;
-        }
-        var lineWidth = textStyle.lineWidth;
-        canvas = textCache[textKey] = document.createElement('CANVAS');
-        canvas.width = Math.ceil((2 * lineWidth + textWidth) * pixelRatio);
-        canvas.height = Math.ceil((2 * lineWidth + textHeight) * pixelRatio);
-        var context = canvas.getContext('2d');
-        context.font = textStyle.font;
-        context.textBaseline = 'top';
-        context.textAlign = 'center';
-        context.translate(canvas.width / 2, 0);
-        context.scale(pixelRatio, pixelRatio);
-        for (i = 0; i < ii; ++i) {
-          if (textStyle.stroke) {
-            context.strokeStyle = textStyle.stroke;
-            context.lineWidth = lineWidth;
-            context.strokeText(lines[i], 0, lineWidth + i * lineHeight);
-          }
-          if (textStyle.fill) {
-            context.fillStyle = textStyle.fill;
-            context.fillText(lines[i], 0, lineWidth + i * lineHeight);
-          }
-        }
-      }
-      var canvasWidth = canvas.width;
-      var canvasHeight = canvas.height;
-      var halfWidth = canvasWidth / 2;
-      var halfHeight = canvasHeight / 2;
-      var textSize = textStyle.textSize * pixelRatio;
-      var anchor = textStyle.anchor;
-      var offset = textStyle.offset;
-      labelX = coord[0] - halfWidth + offset[0] * textSize;
-      labelY = coord[1] - halfHeight + offset[1] * textSize;
-      if (anchor.indexOf('top') != -1) {
-        labelY += halfHeight;
-      } else if (anchor.indexOf('bottom') != -1) {
-        labelY -= halfHeight;
-      }
-      if (anchor.indexOf('left') != -1) {
-        labelX += halfWidth;
-      } else if (anchor.indexOf('right') != -1) {
-        labelX -= halfWidth;
-      }
-      bottomLeft[0] = Math.min(bottomLeft[0], labelX);
-      bottomLeft[1] = Math.min(bottomLeft[1], labelY);
-      topRight[0] = Math.max(topRight[0], labelX + canvasWidth);
-      topRight[1] = Math.max(topRight[1], labelY + canvasHeight);
-    }
-    var target = state.context.canvas;
-    if (0 <= topRight[0] && target.width >= bottomLeft[0] &&
-        0 <= topRight[1] && target.height >= bottomLeft[1]) {
-      var id = (iconStyle && iconStyle.icon) + ',' + textKey;
-      if (id in labels) {
-        var testId = id;
-        var found = true;
-        do {
-          var previous = labels[testId][0];
-          // when bbox of identical previous label and current label do not overlap,
-          // consider label again by using a different id
-          if (previous && (previous.bottomLeft[0] <= topRight[0] && previous.topRight[0] >= bottomLeft[0] &&
-              previous.bottomLeft[1] <= topRight[1] && previous.topRight[1] >= bottomLeft[1])) {
-            found = false;
-          }
-          testId += '_';
-        } while (testId in labels);
-        if (found) {
-          id = testId;
-        }
-      }
-      if (!(id in labels)) {
-        if (iconStyle) {
-          instructions.push({
-            translate: [iconX, iconY],
-            rotate: iconStyle.rotation,
-            alpha: iconStyle.opacity,
-            drawImage: [img, imgData.x, imgData.y, width, height, 0, 0, width * scale, height * scale]
-          });
-        }
-        if (textStyle) {
-          instructions.push({
-            translate: [labelX, labelY],
-            rotate: textStyle.rotation,
-            alpha: textStyle.opacity,
-            drawImage: [canvas, 0, 0]
-          });
-        }
-        gutter[0] = Math.max(gutter[0], (topRight[0] - bottomLeft[0]) / 2);
-        gutter[1] = Math.max(gutter[1], (topRight[1] - bottomLeft[1]) / 2);
-        labels[id] = [bounds, id, weight, instructions];
-      }
-    }
+    return wrappedText;
   }
 
   var allLayers = glStyle.layers;
@@ -504,6 +350,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       preprocess(layer, fonts);
     }
   }
+
+  var textHalo = new Stroke();
+  var textColor = new Fill();
 
   var iconImageCache = {};
 
@@ -601,31 +450,68 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           }
         }
 
-        var iconStyle;
-        if (type == 1 && 'icon-image' in paint) {
+        var hasImage = false;
+        var text = null;
+        var icon, iconImg, skipLabel;
+        if ((type == 1 || type == 2) && 'icon-image' in paint) {
           var iconImage = paint['icon-image'](zoom, properties);
           if (iconImage) {
-            var icon = fromTemplate(iconImage, properties);
-            style = iconImageCache[icon];
-            if (spriteData && spriteImage) {
-              var spriteImageData = spriteData[icon];
-              if (spriteImageData) {
-                iconStyle = {
-                  icon: icon,
-                  img: spriteImage,
-                  imgData: spriteImageData,
-                  scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio,
-                  rotation: deg2rad(paint['icon-rotate'](zoom, properties)),
-                  opacity: paint['icon-opacity'](zoom, properties)
-                };
+            icon = fromTemplate(iconImage, properties);
+            var styleGeom = undefined;
+            if (spriteImage && spriteData && spriteData[icon]) {
+              if (type == 2) {
+                var geom = feature.getGeometry();
+                // ol package and ol-debug.js only
+                if (geom.getFlatMidpoint) {
+                  var extent = geom.getExtent();
+                  var size = Math.sqrt(
+                      Math.pow((extent[2] - extent[0]) / resolution, 2),
+                      Math.pow((extent[3] - extent[1]) / resolution, 2));
+                  if (size > 150) {
+                    //FIXME Do not hard-code a size of 150
+                    styleGeom = new Point(geom.getFlatMidpoint());
+                  }
+                }
+              }
+              if (type !== 2 || styleGeom) {
+                ++stylesLength;
+                style = styles[stylesLength];
+                if (!style || !style.getImage() || style.getFill() || style.getStroke()) {
+                  style = styles[stylesLength] = new Style();
+                }
+                style.setGeometry(styleGeom);
+                iconImg = iconImageCache[icon];
+                if (!iconImg) {
+                  var spriteImageData = spriteData[icon];
+                  iconImg = iconImageCache[icon] = new Icon({
+                    img: spriteImage,
+                    imgSize: spriteImgSize,
+                    size: [spriteImageData.width, spriteImageData.height],
+                    offset: [spriteImageData.x, spriteImageData.y],
+                    scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
+                  });
+                }
+                iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
+                iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
+                style.setImage(iconImg);
+                text = style.getText();
+                style.setText(undefined);
+                style.setZIndex(99999 - index);
+                hasImage = true;
+                skipLabel = false;
+              } else {
+                skipLabel = true;
               }
             }
           }
         }
 
         if (type == 1 && 'circle-radius' in paint) {
-          // TODO Send circles through createIconLabelCombo
           ++stylesLength;
+          style = styles[stylesLength];
+          if (!style || !style.getImage() || style.getFill() || style.getStroke()) {
+            style = styles[stylesLength] = new Style();
+          }
           var circleRadius = paint['circle-radius'](zoom, properties);
           var circleStrokeColor = paint['circle-stroke-color'](zoom, properties);
           var circleColor = paint['circle-color'](zoom, properties);
@@ -633,23 +519,25 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           var circleStrokeWidth = paint['circle-stroke-width'](zoom, properties);
           var cache_key = circleRadius + '.' + circleStrokeColor + '.' +
             circleColor + '.' + circleOpacity + '.' + circleStrokeWidth;
-          style = iconImageCache[cache_key];
-          if (!style) {
-            style = new Style({
-              image: new Circle({
-                radius: circleRadius,
-                stroke: circleStrokeWidth === 0 ? undefined : new Stroke({
-                  width: circleStrokeWidth,
-                  color: colorWithOpacity(circleStrokeColor, circleOpacity)
-                }),
-                fill: new Fill({
-                  color: colorWithOpacity(circleColor, circleOpacity)
-                })
+          iconImg = iconImageCache[cache_key];
+          if (!iconImg) {
+            iconImg = new Circle({
+              radius: circleRadius,
+              stroke: circleStrokeWidth === 0 ? undefined : new Stroke({
+                width: circleStrokeWidth,
+                color: colorWithOpacity(circleStrokeColor, circleOpacity)
+              }),
+              fill: new Fill({
+                color: colorWithOpacity(circleColor, circleOpacity)
               })
             });
           }
-          style.setZIndex(index);
-          styles[stylesLength] = style;
+          style.setImage(iconImg);
+          text = style.getText();
+          style.setText(undefined);
+          style.setGeometry(undefined);
+          style.setZIndex(99999 - index);
+          hasImage = true;
         }
 
         var label;
@@ -657,9 +545,20 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           var textField = paint['text-field'](zoom, properties);
           label = fromTemplate(textField, properties);
         }
-        // TODO Add LineString handling as soon as it's supporte in OpenLayers
-        var textStyle;
-        if (label && type !== 2) {
+        if (label && !skipLabel) {
+          if (!hasImage) {
+            ++stylesLength;
+            style = styles[stylesLength];
+            if (!style || !style.getText() || style.getFill() || style.getStroke()) {
+              style = styles[stylesLength] = new Style();
+            }
+            style.setImage(undefined);
+            style.setGeometry(undefined);
+          }
+          if (!style.getText()) {
+            style.setText(text || new Text());
+          }
+          text = style.getText();
           var textSize = paint['text-size'](zoom, properties);
           var font = mb2css(fontMap[paint['text-font'](zoom, properties)], textSize);
           var textTransform = paint['text-transform'];
@@ -668,47 +567,43 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           } else if (textTransform == 'lowercase') {
             label = label.toLowerCase();
           }
-          var lines = wrapText(label, font, paint['text-max-width'](zoom, properties));
-          textStyle = {
-            text: label,
-            lines: lines,
-            font: font,
-            textSize: textSize,
-            anchor: paint['text-anchor'](zoom, properties),
-            offset: paint['text-offset'](zoom, properties),
-            rotation: deg2rad(paint['text-rotate'](zoom, properties)),
-            opacity: paint['text-opacity'](zoom, properties)
-          };
-          textStyle.fill = paint['text-color'](zoom, properties);
-          if (paint['text-halo-width']) {
-            textStyle.lineWidth = paint['text-halo-width'](zoom, properties);
-            textStyle.stroke = paint['text-halo-color'](zoom, properties);
+          var wrappedLabel = type == 2 ? label : wrapText(label, font, paint['text-max-width'](zoom, properties));
+          text.setText(wrappedLabel);
+          text.setFont(font);
+          text.setRotation(deg2rad(paint['text-rotate'](zoom, properties)));
+          var textAnchor = paint['text-anchor'](zoom, properties);
+          var textAlign = 'center';
+          if (textAnchor.indexOf('left') !== -1) {
+            textAlign = 'left';
+          } else if (textAnchor.indexOf('right') !== -1) {
+            textAlign = 'right';
           }
-        }
-
-        if (iconStyle || textStyle) {
-          ++stylesLength;
-          style = styles[stylesLength];
-          if (!style || !style.getRenderer() || style.getFill() || style.getStroke()) {
-            style = styles[stylesLength] = new Style();
+          text.setTextAlign(textAlign);
+          var textBaseline = 'middle';
+          if (textAnchor.indexOf('bottom') == 0) {
+            textBaseline = 'bottom';
+          } else if (textAnchor.indexOf('top') == 0) {
+            textBaseline = 'top';
           }
-          style.setRenderer(function(coords, state) {
-            var canvas = state.context.canvas;
-            if (!gutter) {
-              var pixelRatio = state.pixelRatio;
-              gutter = [50 * pixelRatio, 20 * pixelRatio];
-            }
-            if (coords[0] > -gutter[0] && coords[1] > -gutter[1] && coords[0] < canvas.width + gutter[0] && coords[1] < canvas.height + gutter[1]) {
-              createIconLabelCombo(iconStyle, textStyle, coords, state, index);
-            }
-          });
-          var geometry = feature.getGeometry();
-          if (geometry.getType() == 'Polygon') {
-            style.setGeometry(geometry.getInteriorPoint());
-          } else if (geometry.getType() == 'MultiPolygon') {
-            style.setGeometry(geometry.getPolygons().sort(sortByWidth)[0].getInteriorPoint());
+          text.setTextBaseline(textBaseline);
+          var textOffset = paint['text-offset'](zoom, properties);
+          text.setOffsetX(textOffset[0] * textSize);
+          text.setOffsetY(textOffset[1] * textSize);
+          text.setPlacement(
+              (hasImage || type == 1) ? 'point' : paint['symbol-placement'](zoom, properties));
+          opacity = paint['text-opacity'](zoom, properties);
+          textColor.setColor(
+              colorWithOpacity(paint['text-color'](zoom, properties), opacity));
+          text.setFill(textColor);
+          var haloColor = colorWithOpacity(paint['text-halo-color'](zoom, properties), opacity);
+          if (haloColor) {
+            textHalo.setColor(haloColor);
+            textHalo.setWidth(paint['text-halo-width'](zoom, properties));
+            text.setStroke(textHalo);
+          } else {
+            text.setStroke(undefined);
           }
-          style.setZIndex(index);
+          style.setZIndex(99999 - index);
         }
       }
     }
@@ -718,55 +613,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       return styles;
     }
   };
-  olLayer.on('change', function() {
-    textCache = {};
-  });
-  olLayer.on('precompose', function() {
-    labelEngine.reset();
-    labels = {};
-  });
 
-  function labelSort(a, b) {
-    //Weight A - B
-    return labels[a][2] - labels[b][2];
-  }
-
-  olLayer.on('postcompose', function(e) {
-    var context = e.context;
-    var keys = Object.keys(labels);
-    keys.sort(labelSort);
-    var i, ii;
-    for (i = 0, ii = keys.length; i < ii; ++i) {
-      var args = labels[keys[i]];
-      labelEngine.ingestLabel.apply(labelEngine, args);
-    }
-
-    labelEngine.update();
-    var items = labelEngine.getShown();
-    for (i = 0, ii = items.length; i < ii; ++i) {
-      var item = items[i];
-      var instructions = item.labelObject;
-      for (var j = 0, jj = instructions.length; j < jj; ++j) {
-        var instruction = instructions[j];
-        var alpha = context.globalAlpha;
-        context.translate.apply(context, instruction.translate);
-        if (instruction.rotate) {
-          context.rotate(instruction.rotate);
-        }
-        if (instruction.alpha != 1) {
-          context.globalAlpha = alpha * instruction.alpha;
-        }
-        context.drawImage.apply(context, instruction.drawImage);
-        if (instruction.alpha != 1) {
-          context.globalAlpha = alpha;
-        }
-        if (instruction.rotate) {
-          context.rotate(-instruction.rotate);
-        }
-        context.translate.apply(context, instruction.translate.map((t) => -t));
-      }
-    }
-  });
   olLayer.setStyle(styleFunction);
   return styleFunction;
 }
