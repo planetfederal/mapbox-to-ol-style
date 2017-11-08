@@ -1,4 +1,5 @@
 var layer = new ol.layer.Vector({
+  declutter: true,
   source: new ol.source.Vector({
     format: new ol.format.GeoJSON(),
     url: 'data/states.geojson'
