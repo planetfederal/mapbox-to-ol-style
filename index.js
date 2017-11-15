@@ -99,24 +99,21 @@ function applyDefaults(properties) {
 
 function applyLayoutToPaint(layer) {
   for (var property in layer.layout) {
-    if (!layer.paint[property]) {
+    if (!(property in layer.paint)) {
       layer.paint[property] = layer.layout[property];
     }
   }
 }
 
 function convertToFunctions(properties, type) {
-  var propertySpec = {
-    function: type
-  };
   for (var i = 0, ii = functions[type].length; i < ii; ++i) {
     var property = functions[type][i];
     if (property in properties) {
       var value = properties[property];
-      if (property.indexOf('color') !== -1) {
-        propertySpec.type = 'color';
-      }
-      properties[property] = glfun(value, propertySpec);
+      properties[property] = glfun(value, {
+        function: type,
+        type: property.indexOf('color') !== -1 ? 'color' : undefined
+      });
     }
   }
 }
