@@ -30,6 +30,7 @@ var functions = {
     'icon-opacity',
     'icon-rotate',
     'icon-size',
+    'icon-color',
     'circle-radius',
     'circle-opacity',
     'circle-stroke-width',
@@ -74,6 +75,7 @@ var defaults = {
   'icon-opacity': 1,
   'icon-rotate': 0,
   'icon-size': 1,
+  'icon-color': '#000000',
   'circle-color': '#000000',
   'circle-stroke-color': '#000000',
   'circle-opacity': 1,
@@ -289,6 +291,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   var spriteImage, spriteImgSize;
   if (spriteImageUrl) {
     var img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = function() {
       spriteImage = img;
       spriteImgSize = [img.width, img.height];
@@ -483,13 +486,45 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                 iconImg = iconImageCache[icon];
                 if (!iconImg) {
                   var spriteImageData = spriteData[icon];
-                  iconImg = iconImageCache[icon] = new Icon({
-                    img: spriteImage,
-                    imgSize: spriteImgSize,
-                    size: [spriteImageData.width, spriteImageData.height],
-                    offset: [spriteImageData.x, spriteImageData.y],
-                    scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
-                  });
+                  var iconColor = paint['icon-color'](zoom, properties);
+                  if (iconColor[0] !== 0 || iconColor[1] !== 0 || iconColor[2] !== 0) {
+                   // cut out the sprite and color it
+                   var color = colorWithOpacity(paint['icon-color'](zoom, properties), 1);
+                   var canvas = document.createElement('canvas');
+                   canvas.width = spriteImageData.width;
+                   canvas.height = spriteImageData.height;
+                   var ctx = canvas.getContext('2d');
+                   ctx.drawImage(
+                     spriteImage,
+                     spriteImageData.x,
+                     spriteImageData.y,
+                     spriteImageData.width,
+                     spriteImageData.height,
+                     0,
+                     0,
+                     spriteImageData.width,
+                     spriteImageData.height
+                   );
+                   var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                   for (var i = 0, length = data.data.length; i < length; i += 4) {
+                     data.data[i] = color[0];
+                     data.data[i + 1] = color[1];
+                     data.data[i + 2] = color[2];
+                   }
+                   ctx.putImageData(data, 0, 0);
+                   iconImg = iconImageCache[icon] = new Icon({
+                     img: canvas,
+                     imgSize: [canvas.width, canvas.height]
+                   });
+                  } else {
+                    iconImg = iconImageCache[icon] = new Icon({
+                      img: spriteImage,
+                      imgSize: spriteImgSize,
+                      size: [spriteImageData.width, spriteImageData.height],
+                      offset: [spriteImageData.x, spriteImageData.y],
+                      scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
+                    });
+                  }
                 }
                 iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
                 iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
