@@ -30,6 +30,7 @@ var functions = {
     'icon-opacity',
     'icon-rotate',
     'icon-size',
+    'icon-color',
     'circle-radius',
     'circle-opacity',
     'circle-stroke-width',
@@ -286,6 +287,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   var spriteImage, spriteImgSize;
   if (spriteImageUrl) {
     var img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = function() {
       spriteImage = img;
       spriteImgSize = [img.width, img.height];
@@ -477,16 +479,54 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                   style = styles[stylesLength] = new Style();
                 }
                 style.setGeometry(styleGeom);
-                iconImg = iconImageCache[icon];
+                var iconSize = paint['icon-size'](zoom, properties);
+                var iconColor = paint['icon-color'] !== undefined ? paint['icon-color'](zoom, properties) : null;
+                var icon_cache_key = icon + '.' + iconSize;
+                if (iconColor !== null) {
+                  icon_cache_key += '.' + iconColor;
+                }
+                iconImg = iconImageCache[icon_cache_key];
                 if (!iconImg) {
                   var spriteImageData = spriteData[icon];
-                  iconImg = iconImageCache[icon] = new Icon({
-                    img: spriteImage,
-                    imgSize: spriteImgSize,
-                    size: [spriteImageData.width, spriteImageData.height],
-                    offset: [spriteImageData.x, spriteImageData.y],
-                    scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
-                  });
+                  if (iconColor !== null) {
+                   // cut out the sprite and color it
+                   var color = colorWithOpacity(iconColor, 1);
+                   var canvas = document.createElement('canvas');
+                   canvas.width = spriteImageData.width;
+                   canvas.height = spriteImageData.height;
+                   var ctx = canvas.getContext('2d');
+                   ctx.drawImage(
+                     spriteImage,
+                     spriteImageData.x,
+                     spriteImageData.y,
+                     spriteImageData.width,
+                     spriteImageData.height,
+                     0,
+                     0,
+                     spriteImageData.width,
+                     spriteImageData.height
+                   );
+                   var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                   for (var i = 0, length = data.data.length; i < length; i += 4) {
+                     data.data[i] = color[0];
+                     data.data[i + 1] = color[1];
+                     data.data[i + 2] = color[2];
+                   }
+                   ctx.putImageData(data, 0, 0);
+                   iconImg = iconImageCache[icon_cache_key] = new Icon({
+                     img: canvas,
+                     imgSize: [canvas.width, canvas.height],
+                     scale: iconSize / spriteImageData.pixelRatio
+                   });
+                  } else {
+                    iconImg = iconImageCache[icon_cache_key] = new Icon({
+                      img: spriteImage,
+                      imgSize: spriteImgSize,
+                      size: [spriteImageData.width, spriteImageData.height],
+                      offset: [spriteImageData.x, spriteImageData.y],
+                      scale: iconSize / spriteImageData.pixelRatio
+                    });
+                  }
                 }
                 iconImg.setRotation(deg2rad(paint['icon-rotate'](zoom, properties)));
                 iconImg.setOpacity(paint['icon-opacity'](zoom, properties));
