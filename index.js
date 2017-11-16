@@ -483,13 +483,15 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                   style = styles[stylesLength] = new Style();
                 }
                 style.setGeometry(styleGeom);
-                iconImg = iconImageCache[icon];
+                var iconSize = paint['icon-size'](zoom, properties);
+                var iconColor = paint['icon-color'](zoom, properties);
+                var icon_cache_key = icon + '.' + iconSize + '.' + iconColor;
+                iconImg = iconImageCache[icon_cache_key];
                 if (!iconImg) {
                   var spriteImageData = spriteData[icon];
-                  var iconColor = paint['icon-color'](zoom, properties);
                   if (iconColor[0] !== 0 || iconColor[1] !== 0 || iconColor[2] !== 0) {
                    // cut out the sprite and color it
-                   var color = colorWithOpacity(paint['icon-color'](zoom, properties), 1);
+                   var color = colorWithOpacity(iconColor, 1);
                    var canvas = document.createElement('canvas');
                    canvas.width = spriteImageData.width;
                    canvas.height = spriteImageData.height;
@@ -512,18 +514,18 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                      data.data[i + 2] = color[2];
                    }
                    ctx.putImageData(data, 0, 0);
-                   iconImg = iconImageCache[icon] = new Icon({
+                   iconImg = iconImageCache[icon_cache_key] = new Icon({
                      img: canvas,
                      imgSize: [canvas.width, canvas.height],
-                     scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
+                     scale: iconSize / spriteImageData.pixelRatio
                    });
                   } else {
-                    iconImg = iconImageCache[icon] = new Icon({
+                    iconImg = iconImageCache[icon_cache_key] = new Icon({
                       img: spriteImage,
                       imgSize: spriteImgSize,
                       size: [spriteImageData.width, spriteImageData.height],
                       offset: [spriteImageData.x, spriteImageData.y],
-                      scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
+                      scale: iconSize / spriteImageData.pixelRatio
                     });
                   }
                 }
