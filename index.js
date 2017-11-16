@@ -75,7 +75,6 @@ var defaults = {
   'icon-opacity': 1,
   'icon-rotate': 0,
   'icon-size': 1,
-  'icon-color': '#000000',
   'circle-color': '#000000',
   'circle-stroke-color': '#000000',
   'circle-opacity': 1,
@@ -484,12 +483,15 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                 }
                 style.setGeometry(styleGeom);
                 var iconSize = paint['icon-size'](zoom, properties);
-                var iconColor = paint['icon-color'](zoom, properties);
-                var icon_cache_key = icon + '.' + iconSize + '.' + iconColor;
+                var iconColor = paint['icon-color'] !== undefined ? paint['icon-color'](zoom, properties) : null;
+                var icon_cache_key = icon + '.' + iconSize;
+                if (iconColor !== null) {
+                  icon_cache_key += '.' + iconColor;
+                }
                 iconImg = iconImageCache[icon_cache_key];
                 if (!iconImg) {
                   var spriteImageData = spriteData[icon];
-                  if (iconColor[0] !== 0 || iconColor[1] !== 0 || iconColor[2] !== 0) {
+                  if (iconColor !== null) {
                    // cut out the sprite and color it
                    var color = colorWithOpacity(iconColor, 1);
                    var canvas = document.createElement('canvas');
