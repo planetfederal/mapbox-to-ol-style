@@ -514,7 +514,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                    ctx.putImageData(data, 0, 0);
                    iconImg = iconImageCache[icon] = new Icon({
                      img: canvas,
-                     imgSize: [canvas.width, canvas.height]
+                     imgSize: [canvas.width, canvas.height],
+                     scale: paint['icon-size'](zoom, properties) / spriteImageData.pixelRatio
                    });
                   } else {
                     iconImg = iconImageCache[icon] = new Icon({
