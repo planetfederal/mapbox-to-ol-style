@@ -1,6 +1,6 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Utility for creating OpenLayers style functions from Mapbox Style objects",
   "main": "index.js",
   "repository": {
@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@mapbox/mapbox-gl-style-spec": "^9.0.0",
-    "mapbox-to-css-font": "^2.0.3",
+    "mapbox-to-css-font": "^2.1.0",
     "ol": "^4.5.0"
   },
   "devDependencies": {
