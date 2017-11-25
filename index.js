@@ -489,35 +489,35 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                 if (!iconImg) {
                   var spriteImageData = spriteData[icon];
                   if (iconColor !== null) {
-                   // cut out the sprite and color it
-                   var color = colorWithOpacity(iconColor, 1);
-                   var canvas = document.createElement('canvas');
-                   canvas.width = spriteImageData.width;
-                   canvas.height = spriteImageData.height;
-                   var ctx = canvas.getContext('2d');
-                   ctx.drawImage(
-                     spriteImage,
-                     spriteImageData.x,
-                     spriteImageData.y,
-                     spriteImageData.width,
-                     spriteImageData.height,
-                     0,
-                     0,
-                     spriteImageData.width,
-                     spriteImageData.height
-                   );
-                   var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                   for (var i = 0, length = data.data.length; i < length; i += 4) {
-                     data.data[i] = color[0];
-                     data.data[i + 1] = color[1];
-                     data.data[i + 2] = color[2];
-                   }
-                   ctx.putImageData(data, 0, 0);
-                   iconImg = iconImageCache[icon_cache_key] = new Icon({
-                     img: canvas,
-                     imgSize: [canvas.width, canvas.height],
-                     scale: iconSize / spriteImageData.pixelRatio
-                   });
+                    // cut out the sprite and color it
+                    color = colorWithOpacity(iconColor, 1);
+                    var canvas = document.createElement('canvas');
+                    canvas.width = spriteImageData.width;
+                    canvas.height = spriteImageData.height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(
+                      spriteImage,
+                      spriteImageData.x,
+                      spriteImageData.y,
+                      spriteImageData.width,
+                      spriteImageData.height,
+                      0,
+                      0,
+                      spriteImageData.width,
+                      spriteImageData.height
+                    );
+                    var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    for (var c = 0, cc = data.data.length; c < cc; c += 4) {
+                      data.data[c] = color[0];
+                      data.data[c + 1] = color[1];
+                      data.data[c + 2] = color[2];
+                    }
+                    ctx.putImageData(data, 0, 0);
+                    iconImg = iconImageCache[icon_cache_key] = new Icon({
+                      img: canvas,
+                      imgSize: [canvas.width, canvas.height],
+                      scale: iconSize / spriteImageData.pixelRatio
+                    });
                   } else {
                     iconImg = iconImageCache[icon_cache_key] = new Icon({
                       img: spriteImage,
