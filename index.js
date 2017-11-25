@@ -141,6 +141,10 @@ function chooseFont(fonts, availableFonts) {
           break;
         }
       }
+      if (!fontMap[fonts]) {
+        // fallback font
+        fontMap[fonts] = fonts[fonts.length - 1];
+      }
     }
   } else {
     fontMap[fonts] = fonts[0];
