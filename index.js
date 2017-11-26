@@ -136,7 +136,7 @@ function chooseFont(fonts, availableFonts) {
     if (!fontMap[fonts]) {
       for (i = 0, ii = fonts.length; i < ii; ++i) {
         font = fonts[i];
-        if (availableFonts.indexOf(font) >= -1) {
+        if (availableFonts.indexOf(font) != -1) {
           fontMap[fonts] = font;
           break;
         }
