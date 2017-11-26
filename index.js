@@ -232,13 +232,15 @@ function deg2rad(degrees) {
 var templateRegEx = /^(.*)\{(.*)\}(.*)$/;
 
 function fromTemplate(text, properties) {
-  var parts = text.match(templateRegEx);
-  if (parts) {
-    var value = properties[parts[2]] || '';
-    return parts[1] + value + parts[3];
-  } else {
-    return text;
-  }
+  var parts;
+  do {
+    parts = text.match(templateRegEx);
+    if (parts) {
+      var value = properties[parts[2]] || '';
+      text = parts[1] + value + parts[3];
+    }
+  } while (parts);
+  return text;
 }
 
 /**
