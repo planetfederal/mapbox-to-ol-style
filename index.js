@@ -113,7 +113,8 @@ function convertToFunctions(properties, type) {
       var value = properties[property];
       properties[property] = glfun(value, {
         function: type,
-        type: property.indexOf('color') !== -1 ? 'color' : undefined
+        type: property.indexOf('color') !== -1 ? 'color' :
+          typeof value == 'object' && value.stops && typeof value.stops[0][0] == 'number' ? 'number' : undefined
       });
     }
   }
