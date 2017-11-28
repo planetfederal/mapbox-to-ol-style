@@ -230,7 +230,7 @@ function deg2rad(degrees) {
   return degrees * Math.PI / 180;
 }
 
-var templateRegEx = /^(.*)\{(.*)\}(.*)$/;
+var templateRegEx = /^([^]*)\{(.*)\}([^]*)$/;
 
 function fromTemplate(text, properties) {
   var parts;
