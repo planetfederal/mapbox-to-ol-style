@@ -249,7 +249,11 @@ function fromTemplate(text, properties) {
  * the specified `source`, which needs to be a `"type": "vector"` or
  * `"type": "geojson"` source and applies it to the specified OpenLayers layer.
  *
- * @param {ol.layer.Vector|ol.layer.VectorTile} olLayer OpenLayers layer.
+ * @param {ol.layer.Vector|ol.layer.VectorTile} olLayer OpenLayers layer to
+ * apply the style to. In addition to the style, the layer will get two
+ * properties: `mapbox-source` will be the `id` of the `glStyle`'s source used
+ * for the layer, and `mapbox-layers` will be an array of the `id`s of the
+ * `glStyle`'s layers.
  * @param {string|Object} glStyle Mapbox Style object.
  * @param {string|Array<string>} source `source` key or an array of layer `id`s
  * from the Mapbox Style object. When a `source` key is provided, all layers for
@@ -336,6 +340,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
 
   var allLayers = glStyle.layers;
   var layersBySourceLayer = {};
+  var mapboxLayers = [];
+  var mapboxSource;
   for (var i = 0, ii = allLayers.length; i < ii; ++i) {
     var layer = allLayers[i];
     if (!layer.layout) {
@@ -345,6 +351,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     if (typeof source == 'string' && layer.source == source ||
         source.indexOf(layer.id) !== -1) {
       var sourceLayer = layer['source-layer'];
+      if (!mapboxSource) {
+        mapboxSource = layer.source;
+      }
       var layers = layersBySourceLayer[sourceLayer];
       if (!layers) {
         layers = layersBySourceLayer[sourceLayer] = [];
@@ -353,6 +362,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         layer: layer,
         index: i
       });
+      mapboxLayers.push(layer.id);
       preprocess(layer, fonts);
     }
   }
@@ -663,5 +673,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   };
 
   olLayer.setStyle(styleFunction);
+  olLayer.set('mapbox-source', mapboxSource);
+  olLayer.set('mapbox-layers', mapboxLayers);
   return styleFunction;
 }
