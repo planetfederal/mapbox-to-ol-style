@@ -41,7 +41,11 @@ the specified `source`, which needs to be a `"type": "vector"` or
 
 **Parameters**
 
--   `olLayer` **(ol.layer.Vector | ol.layer.VectorTile)** OpenLayers layer.
+-   `olLayer` **(ol.layer.Vector | ol.layer.VectorTile)** OpenLayers layer to
+    apply the style to. In addition to the style, the layer will get two
+    properties: `mapbox-source` will be the `id` of the `glStyle`'s source used
+    for the layer, and `mapbox-layers` will be an array of the `id`s of the
+    `glStyle`'s layers.
 -   `glStyle` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object))** Mapbox Style object.
 -   `source` **([string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) \| [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)>)** `source` key or an array of layer `id`s
     from the Mapbox Style object. When a `source` key is provided, all layers for
