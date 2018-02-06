@@ -54,7 +54,7 @@
     "prepublish": "npm run doc && npm run build",
     "build": "mkdirp dist && browserify -g [ babelify  ] -p [ standalonify --name mb2olstyle --deps [ null --ol/style/style ol.style.Style --ol/style/fill ol.style.Fill --ol/style/stroke ol.style.Stroke --ol/style/icon ol.style.Icon --ol/style/text ol.style.Text --ol/style/circle ol.style.Circle --ol/geom/point ol.geom.Point ] ] index.js > dist/mb2olstyle.js && echo 'mb2olstyle=mb2olstyle.default' >> dist/mb2olstyle.js",
     "doc": "documentation readme -s API index.js",
-    "pretest": "eslint src & npm run test-bundle",
+    "pretest": "eslint index.js test example & npm run test-bundle",
     "test": "phantomjs --local-to-remote-url-access=true ./node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js test/index.html spec '{\"useColors\":true, \"ignoreResourceErrors\": true}'",
     "test-bundle": "browserify -g [ babelify ] test/test.js > test/bundle.js"
   },
