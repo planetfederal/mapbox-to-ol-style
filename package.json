@@ -71,7 +71,7 @@
     "browserify": "^14.4.0",
     "documentation": "^4.0.0",
     "eslint": "^3.18.0",
-    "eslint-config-openlayers": "^7.0.0",
+    "eslint-config-openlayers": "^9.0.0",
     "mkdirp": "^0.5.1",
     "mocha": "^3.4.2",
     "mocha-phantomjs-core": "^2.1.1",
