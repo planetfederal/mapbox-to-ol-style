@@ -458,9 +458,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
             stroke.setColor(color);
             stroke.setWidth(width);
             stroke.setLineDash(paint['line-dasharray'] ?
-                paint['line-dasharray'](zoom, properties).map(function(x) {
-                  return x * width;
-                }) : null);
+              paint['line-dasharray'](zoom, properties).map(function(x) {
+                return x * width;
+              }) : null);
             style.setZIndex(index);
           }
         }
@@ -480,8 +480,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                 if (geom.getFlatMidpoint) {
                   const extent = geom.getExtent();
                   const size = Math.sqrt(
-                      Math.pow((extent[2] - extent[0]) / resolution, 2),
-                      Math.pow((extent[3] - extent[1]) / resolution, 2));
+                    Math.pow((extent[2] - extent[0]) / resolution, 2),
+                    Math.pow((extent[3] - extent[1]) / resolution, 2));
                   if (size > 150) {
                     //FIXME Do not hard-code a size of 150
                     styleGeom = new Point(geom.getFlatMidpoint());
@@ -649,8 +649,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           text.setOffsetX(textOffset[0] * textSize);
           text.setOffsetY(textOffset[1] * textSize);
           opacity = paint['text-opacity'](zoom, properties);
-          textColor.setColor(
-              colorWithOpacity(paint['text-color'](zoom, properties), opacity));
+          textColor.setColor(colorWithOpacity(paint['text-color'](zoom, properties), opacity));
           text.setFill(textColor);
           const haloColor = colorWithOpacity(paint['text-halo-color'](zoom, properties), opacity);
           if (haloColor) {
