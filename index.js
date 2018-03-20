@@ -371,7 +371,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       const layer = layerData.layer;
       const layout = layer.layout;
       const paint = layer.paint;
-      if (paint.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
+      if (layout.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
