@@ -110,38 +110,28 @@ function getValue(layer, type, property, zoom, properties) {
 const fontMap = {};
 
 function chooseFont(fonts, availableFonts) {
+  if (fontMap[fonts]) {
+    return fontMap[fonts];
+  }
   if (availableFonts) {
-    if (!Array.isArray(fonts)) {
-      const stops = fonts.stops;
-      if (stops) {
-        for (let i = 0, ii = stops.length; i < ii; ++i) {
-          chooseFont(stops[i][1], availableFonts);
-        }
+    for (let i = 0, ii = fonts.length; i < ii; ++i) {
+      const font = fonts[i];
+      if (availableFonts.indexOf(font) != -1) {
+        fontMap[fonts] = font;
+        break;
       }
-      return;
     }
     if (!fontMap[fonts]) {
-      for (let i = 0, ii = fonts.length; i < ii; ++i) {
-        const font = fonts[i];
-        if (availableFonts.indexOf(font) != -1) {
-          fontMap[fonts] = font;
-          break;
-        }
-      }
-      if (!fontMap[fonts]) {
-        // fallback font
-        fontMap[fonts] = fonts[fonts.length - 1];
-      }
+      // fallback font
+      fontMap[fonts] = fonts[fonts.length - 1];
     }
   } else {
     fontMap[fonts] = fonts[0];
   }
+  return fontMap[fonts];
 }
 
 function preprocess(layer, fonts) {
-  if (layer.layout['text-field']) {
-    chooseFont(layer.layout['text-font'], fonts);
-  }
   if (Array.isArray(layer.filter)) {
     layer.filter = createFilter(layer.filter);
   }
@@ -592,7 +582,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           }
           text = style.getText();
           const textSize = getValue(layer, 'layout', 'text-size', zoom, properties);
-          const font = mb2css(fontMap[getValue(layer, 'layout', 'text-font', zoom, properties)], textSize);
+          const font = mb2css(chooseFont(getValue(layer, 'layout', 'text-font', zoom, properties)), textSize);
           const textTransform = layout['text-transform'];
           if (textTransform == 'uppercase') {
             label = label.toUpperCase();
