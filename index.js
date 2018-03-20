@@ -457,9 +457,10 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                 // ol package and ol-debug.js only
                 if (geom.getFlatMidpoint) {
                   const extent = geom.getExtent();
-                  const size = Math.sqrt(
+                  const size = Math.sqrt(Math.max(
                     Math.pow((extent[2] - extent[0]) / resolution, 2),
-                    Math.pow((extent[3] - extent[1]) / resolution, 2));
+                    Math.pow((extent[3] - extent[1]) / resolution, 2))
+                  );
                   if (size > 150) {
                     //FIXME Do not hard-code a size of 150
                     styleGeom = new Point(geom.getFlatMidpoint());
