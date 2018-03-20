@@ -52,6 +52,7 @@
   "license": "BSD-2-Clause",
   "scripts": {
     "prepublish": "npm run doc",
+    "build": "webpack-cli --config ./webpack.config.js",
     "doc": "documentation readme -s API index.js",
     "lint": "eslint __test__ index.js webpack.conf.js",
     "start": "webpack-dev-server --config ./webpack.config.js",
@@ -93,6 +94,7 @@
       "/node_modules/(?!(ol|mapbox-to-ol-style|ol-mapbox-style)/).*/"
     ],
     "coveragePathIgnorePatterns": [
+      "webpack.conf.js",
       "env-setup.js",
       "/node_modules/"
     ]
