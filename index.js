@@ -236,11 +236,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       resolutions.push(res);
     }
   }
-  if (typeof glStyle == 'object') {
-    // We do not want to modify the original, so we deep-clone it
-    glStyle = JSON.stringify(glStyle);
+  if (typeof glStyle == 'string') {
+    glStyle = JSON.parse(glStyle);
   }
-  glStyle = JSON.parse(glStyle);
   if (glStyle.version != 8) {
     throw new Error('glStyle version 8 required.');
   }
