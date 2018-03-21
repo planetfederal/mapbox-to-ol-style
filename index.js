@@ -210,6 +210,8 @@ function fromTemplate(text, properties) {
   return text;
 }
 
+const emptyObj = {};
+
 /**
  * Creates a style function from the `glStyle` object for all layers that use
  * the specified `source`, which needs to be a `"type": "vector"` or
@@ -309,9 +311,6 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
   let mapboxSource;
   for (let i = 0, ii = allLayers.length; i < ii; ++i) {
     const layer = allLayers[i];
-    if (!layer.layout) {
-      layer.layout = {};
-    }
     resolveRef(layer, glStyle);
     if (typeof source == 'string' && layer.source == source ||
         source.indexOf(layer.id) !== -1) {
@@ -359,8 +358,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       const layerData = layers[i];
       const layer = layerData.layer;
       const layerId = layer.id;
-      const layout = layer.layout;
-      const paint = layer.paint;
+      const layout = layer.layout || emptyObj;
+      const paint = layer.paint || emptyObj;
       if (layout.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
