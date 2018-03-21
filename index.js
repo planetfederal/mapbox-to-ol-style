@@ -87,14 +87,13 @@ const types = {
 };
 
 const functionCache = {};
-function getValue(layer, type, property, zoom, properties) {
-  const layerId = layer.id;
+function getValue(layerId, layoutOrPaint, property, zoom, properties) {
   if (!functionCache[layerId]) {
     functionCache[layerId] = {};
   }
   const functions = functionCache[layerId];
   if (!functions[property]) {
-    let value = layer[type][property];
+    let value = layoutOrPaint[property];
     if (value === undefined) {
       value = defaults[property];
     }
@@ -359,6 +358,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     for (let i = 0, ii = layers.length; i < ii; ++i) {
       const layerData = layers[i];
       const layer = layerData.layer;
+      const layerId = layer.id;
       const layout = layer.layout;
       const paint = layer.paint;
       if (layout.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
@@ -370,8 +370,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         const index = layerData.index;
         if (type == 3) {
           if (!('fill-pattern' in paint) && 'fill-color' in paint) {
-            opacity = getValue(layer, 'paint', 'fill-opacity', zoom, properties);
-            color = colorWithOpacity(getValue(layer, 'paint', 'fill-color', zoom, properties), opacity);
+            opacity = getValue(layerId, paint, 'fill-opacity', zoom, properties);
+            color = colorWithOpacity(getValue(layerId, paint, 'fill-color', zoom, properties), opacity);
             if (color) {
               ++stylesLength;
               style = styles[stylesLength];
@@ -385,7 +385,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
               style.setZIndex(index);
             }
             if ('fill-outline-color' in paint) {
-              strokeColor = colorWithOpacity(getValue(layer, 'paint', 'fill-outline-color', zoom, properties), opacity);
+              strokeColor = colorWithOpacity(getValue(layerId, paint, 'fill-outline-color', zoom, properties), opacity);
             }
             if (strokeColor) {
               ++stylesLength;
@@ -408,9 +408,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         }
         if (type != 1) {
           color = !('line-pattern' in paint) && 'line-color' in paint ?
-            colorWithOpacity(getValue(layer, 'paint', 'line-color', zoom, properties), getValue(layer, 'paint', 'line-opacity', zoom, properties)) :
+            colorWithOpacity(getValue(layerId, paint, 'line-color', zoom, properties), getValue(layerId, paint, 'line-opacity', zoom, properties)) :
             undefined;
-          const width = getValue(layer, 'paint', 'line-width', zoom, properties);
+          const width = getValue(layerId, paint, 'line-width', zoom, properties);
           if (color && width > 0) {
             ++stylesLength;
             style = styles[stylesLength];
@@ -420,13 +420,13 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
               });
             }
             stroke = style.getStroke();
-            stroke.setLineCap(getValue(layer, 'layout', 'line-cap', zoom, properties));
-            stroke.setLineJoin(getValue(layer, 'layout', 'line-join', zoom, properties));
-            stroke.setMiterLimit(getValue(layer, 'layout', 'line-miter-limit', zoom, properties));
+            stroke.setLineCap(getValue(layerId, layout, 'line-cap', zoom, properties));
+            stroke.setLineJoin(getValue(layerId, layout, 'line-join', zoom, properties));
+            stroke.setMiterLimit(getValue(layerId, layout, 'line-miter-limit', zoom, properties));
             stroke.setColor(color);
             stroke.setWidth(width);
             stroke.setLineDash(paint['line-dasharray'] ?
-              getValue(layer, 'paint', 'line-dasharray', zoom, properties).map(function(x) {
+              getValue(layerId, paint, 'line-dasharray', zoom, properties).map(function(x) {
                 return x * width;
               }) : null);
             style.setZIndex(index);
@@ -437,7 +437,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         let text = null;
         let icon, iconImg, skipLabel;
         if ((type == 1 || type == 2) && 'icon-image' in layout) {
-          const iconImage = getValue(layer, 'layout', 'icon-image', zoom, properties);
+          const iconImage = getValue(layerId, layout, 'icon-image', zoom, properties);
           if (iconImage) {
             icon = fromTemplate(iconImage, properties);
             let styleGeom = undefined;
@@ -464,8 +464,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                   style = styles[stylesLength] = new Style();
                 }
                 style.setGeometry(styleGeom);
-                const iconSize = getValue(layer, 'layout', 'icon-size', zoom, properties);
-                const iconColor = paint['icon-color'] !== undefined ? getValue(layer, 'paint', 'icon-color', zoom, properties) : null;
+                const iconSize = getValue(layerId, layout, 'icon-size', zoom, properties);
+                const iconColor = paint['icon-color'] !== undefined ? getValue(layerId, paint, 'icon-color', zoom, properties) : null;
                 let icon_cache_key = icon + '.' + iconSize;
                 if (iconColor !== null) {
                   icon_cache_key += '.' + iconColor;
@@ -513,8 +513,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
                     });
                   }
                 }
-                iconImg.setRotation(deg2rad(getValue(layer, 'layout', 'icon-rotate', zoom, properties)));
-                iconImg.setOpacity(getValue(layer, 'paint', 'icon-opacity', zoom, properties));
+                iconImg.setRotation(deg2rad(getValue(layerId, layout, 'icon-rotate', zoom, properties)));
+                iconImg.setOpacity(getValue(layerId, paint, 'icon-opacity', zoom, properties));
                 style.setImage(iconImg);
                 text = style.getText();
                 style.setText(undefined);
@@ -534,11 +534,11 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           if (!style || !style.getImage() || style.getFill() || style.getStroke()) {
             style = styles[stylesLength] = new Style();
           }
-          const circleRadius = getValue(layer, 'paint', 'circle-radius', zoom, properties);
-          const circleStrokeColor = getValue(layer, 'paint', 'circle-stroke-color', zoom, properties);
-          const circleColor = getValue(layer, 'paint', 'circle-color', zoom, properties);
-          const circleOpacity = getValue(layer, 'paint', 'circle-opacity', zoom, properties);
-          const circleStrokeWidth = getValue(layer, 'paint', 'circle-stroke-width', zoom, properties);
+          const circleRadius = getValue(layerId, paint, 'circle-radius', zoom, properties);
+          const circleStrokeColor = getValue(layerId, paint, 'circle-stroke-color', zoom, properties);
+          const circleColor = getValue(layerId, paint, 'circle-color', zoom, properties);
+          const circleOpacity = getValue(layerId, paint, 'circle-opacity', zoom, properties);
+          const circleStrokeWidth = getValue(layerId, paint, 'circle-stroke-width', zoom, properties);
           const cache_key = circleRadius + '.' + circleStrokeColor + '.' +
             circleColor + '.' + circleOpacity + '.' + circleStrokeWidth;
           iconImg = iconImageCache[cache_key];
@@ -564,7 +564,7 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
 
         let label;
         if ('text-field' in layout) {
-          const textField = getValue(layer, 'layout', 'text-field', zoom, properties);
+          const textField = getValue(layerId, layout, 'text-field', zoom, properties);
           label = fromTemplate(textField, properties);
         }
         if (label && !skipLabel) {
@@ -581,20 +581,20 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
             style.setText(text || new Text());
           }
           text = style.getText();
-          const textSize = getValue(layer, 'layout', 'text-size', zoom, properties);
-          const font = mb2css(chooseFont(getValue(layer, 'layout', 'text-font', zoom, properties)), textSize);
+          const textSize = getValue(layerId, layout, 'text-size', zoom, properties);
+          const font = mb2css(chooseFont(getValue(layerId, layout, 'text-font', zoom, properties)), textSize);
           const textTransform = layout['text-transform'];
           if (textTransform == 'uppercase') {
             label = label.toUpperCase();
           } else if (textTransform == 'lowercase') {
             label = label.toLowerCase();
           }
-          const wrappedLabel = type == 2 ? label : wrapText(label, font, getValue(layer, 'layout', 'text-max-width', zoom, properties));
+          const wrappedLabel = type == 2 ? label : wrapText(label, font, getValue(layerId, layout, 'text-max-width', zoom, properties));
           text.setText(wrappedLabel);
           text.setFont(font);
-          text.setRotation(deg2rad(getValue(layer, 'layout', 'text-rotate', zoom, properties)));
-          const textAnchor = getValue(layer, 'layout', 'text-anchor', zoom, properties);
-          const placement = (hasImage || type == 1) ? 'point' : getValue(layer, 'layout', 'symbol-placement', zoom, properties);
+          text.setRotation(deg2rad(getValue(layerId, layout, 'text-rotate', zoom, properties)));
+          const textAnchor = getValue(layerId, layout, 'text-anchor', zoom, properties);
+          const placement = (hasImage || type == 1) ? 'point' : getValue(layerId, layout, 'symbol-placement', zoom, properties);
           text.setPlacement(placement);
           if (placement == 'point') {
             let textAlign = 'center';
@@ -614,16 +614,16 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
             textBaseline = 'top';
           }
           text.setTextBaseline(textBaseline);
-          const textOffset = getValue(layer, 'layout', 'text-offset', zoom, properties);
+          const textOffset = getValue(layerId, layout, 'text-offset', zoom, properties);
           text.setOffsetX(textOffset[0] * textSize);
           text.setOffsetY(textOffset[1] * textSize);
-          opacity = getValue(layer, 'paint', 'text-opacity', zoom, properties);
-          textColor.setColor(colorWithOpacity(getValue(layer, 'paint', 'text-color', zoom, properties), opacity));
+          opacity = getValue(layerId, paint, 'text-opacity', zoom, properties);
+          textColor.setColor(colorWithOpacity(getValue(layerId, paint, 'text-color', zoom, properties), opacity));
           text.setFill(textColor);
-          const haloColor = colorWithOpacity(getValue(layer, 'paint', 'text-halo-color', zoom, properties), opacity);
+          const haloColor = colorWithOpacity(getValue(layerId, paint, 'text-halo-color', zoom, properties), opacity);
           if (haloColor) {
             textHalo.setColor(haloColor);
-            textHalo.setWidth(getValue(layer, 'paint', 'text-halo-width', zoom, properties));
+            textHalo.setWidth(getValue(layerId, paint, 'text-halo-width', zoom, properties));
             text.setStroke(textHalo);
           } else {
             text.setStroke(undefined);

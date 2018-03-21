@@ -55,13 +55,12 @@ the specified `source`, which needs to be a `"type": "vector"` or
     from the Mapbox Style object. When a `source` key is provided, all layers for
     the specified source will be included in the style function. When layer `id`s
     are provided, they must be from layers that use the same source.
--   `resolutions` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)>** Resolutions for mapping resolution to zoom level. (optional, default `[156543.03392804097,
-    78271.51696402048,39135.75848201024,19567.87924100512,9783.93962050256,
-    4891.96981025128,2445.98490512564,1222.99245256282,611.49622628141,
-    305.748113140705,152.8740565703525,76.43702828517625,38.21851414258813,
-    19.109257071294063,9.554628535647032,4.777314267823516,2.388657133911758,
-    1.194328566955879,0.5971642834779395,0.29858214173896974,
-    0.14929107086948487,0.07464553543474244]`)
+-   `resolutions` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)>** Resolutions for mapping resolution to zoom level. (optional, default `[78271.51696402048,39135.75848201024,
+    19567.87924100512,9783.93962050256,4891.96981025128,2445.98490512564,
+    1222.99245256282,611.49622628141,305.748113140705,152.8740565703525,
+    76.43702828517625,38.21851414258813,19.109257071294063,9.554628535647032,
+    4.777314267823516,2.388657133911758,1.194328566955879,0.5971642834779395,
+    0.29858214173896974,0.14929107086948487,0.07464553543474244]`)
 -   `spriteData` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Sprite data from the url specified in
     the Mapbox Style object's `sprite` property. Only required if a `sprite`
     property is specified in the Mapbox Style object. (optional, default `undefined`)
