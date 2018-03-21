@@ -107,7 +107,6 @@ function getValue(layerId, layoutOrPaint, property, zoom, properties) {
 }
 
 const fontMap = {};
-
 function chooseFont(fonts, availableFonts) {
   if (fontMap[fonts]) {
     return fontMap[fonts];
@@ -130,10 +129,12 @@ function chooseFont(fonts, availableFonts) {
   return fontMap[fonts];
 }
 
-function preprocess(layer, fonts) {
-  if (Array.isArray(layer.filter)) {
-    layer.filter = createFilter(layer.filter);
+const filterCache = {};
+function evaluateFilter(layerId, filter, feature) {
+  if (!(layerId in filterCache)) {
+    filterCache[layerId] = createFilter(filter);
   }
+  return filterCache[layerId](feature);
 }
 
 function resolveRef(layer, glStyleObj) {
@@ -327,7 +328,6 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         index: i
       });
       mapboxLayers.push(layer.id);
-      preprocess(layer, fonts);
     }
   }
 
@@ -364,7 +364,8 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
-      if (!layer.filter || layer.filter(f)) {
+      const filter = layer.filter;
+      if (!filter || evaluateFilter(layerId, filter, f)) {
         let color, opacity, fill, stroke, strokeColor, style;
         const index = layerData.index;
         if (type == 3) {
