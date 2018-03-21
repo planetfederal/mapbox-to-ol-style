@@ -11,6 +11,7 @@ import Icon from 'ol/style/icon';
 import Text from 'ol/style/text';
 import Circle from 'ol/style/circle';
 import Point from 'ol/geom/point';
+import derefLayers from '@mapbox/mapbox-gl-style-spec/deref';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
@@ -135,25 +136,6 @@ function evaluateFilter(layerId, filter, feature) {
     filterCache[layerId] = createFilter(filter);
   }
   return filterCache[layerId](feature);
-}
-
-function resolveRef(layer, glStyleObj) {
-  if (layer.ref) {
-    const layers = glStyleObj.layers;
-    for (let i = 0, ii = layers.length; i < ii; ++i) {
-      const refLayer = layers[i];
-      if (refLayer.id == layer.ref) {
-        layer.type = refLayer.type;
-        layer.source = refLayer.source;
-        layer['source-layer'] = refLayer['source-layer'];
-        layer.minzoom = refLayer.minzoom;
-        layer.maxzoom = refLayer.maxzoom;
-        layer.filter = refLayer.filter;
-        layer.layout = refLayer.layout;
-        return;
-      }
-    }
-  }
 }
 
 function getZoomForResolution(resolution, resolutions) {
@@ -306,13 +288,13 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     return wrappedText;
   }
 
-  const allLayers = glStyle.layers;
+  const allLayers = derefLayers(glStyle.layers);
+
   const layersBySourceLayer = {};
   const mapboxLayers = [];
   let mapboxSource;
   for (let i = 0, ii = allLayers.length; i < ii; ++i) {
     const layer = allLayers[i];
-    resolveRef(layer, glStyle);
     if (typeof source == 'string' && layer.source == source ||
         source.indexOf(layer.id) !== -1) {
       const sourceLayer = layer['source-layer'];
