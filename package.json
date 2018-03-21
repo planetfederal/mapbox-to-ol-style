@@ -74,6 +74,7 @@
     "babel-preset-env": "^1.6.1",
     "babel-preset-es2015": "^6.24.1",
     "canvas-prebuilt": "^1.6.5-prerelease.1",
+    "deep-freeze": "0.0.1",
     "documentation": "^5.4.0",
     "eslint": "^4.17.0",
     "eslint-config-openlayers": "^9.0.0",

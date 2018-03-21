@@ -11,6 +11,7 @@ import Icon from 'ol/style/icon';
 import Text from 'ol/style/text';
 import Circle from 'ol/style/circle';
 import Point from 'ol/geom/point';
+import derefLayers from '@mapbox/mapbox-gl-style-spec/deref';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
@@ -107,7 +108,6 @@ function getValue(layerId, layoutOrPaint, property, zoom, properties) {
 }
 
 const fontMap = {};
-
 function chooseFont(fonts, availableFonts) {
   if (fontMap[fonts]) {
     return fontMap[fonts];
@@ -130,29 +130,12 @@ function chooseFont(fonts, availableFonts) {
   return fontMap[fonts];
 }
 
-function preprocess(layer, fonts) {
-  if (Array.isArray(layer.filter)) {
-    layer.filter = createFilter(layer.filter);
+const filterCache = {};
+function evaluateFilter(layerId, filter, feature) {
+  if (!(layerId in filterCache)) {
+    filterCache[layerId] = createFilter(filter);
   }
-}
-
-function resolveRef(layer, glStyleObj) {
-  if (layer.ref) {
-    const layers = glStyleObj.layers;
-    for (let i = 0, ii = layers.length; i < ii; ++i) {
-      const refLayer = layers[i];
-      if (refLayer.id == layer.ref) {
-        layer.type = refLayer.type;
-        layer.source = refLayer.source;
-        layer['source-layer'] = refLayer['source-layer'];
-        layer.minzoom = refLayer.minzoom;
-        layer.maxzoom = refLayer.maxzoom;
-        layer.filter = refLayer.filter;
-        layer.layout = refLayer.layout;
-        return;
-      }
-    }
-  }
+  return filterCache[layerId](feature);
 }
 
 function getZoomForResolution(resolution, resolutions) {
@@ -210,6 +193,8 @@ function fromTemplate(text, properties) {
   return text;
 }
 
+const emptyObj = {};
+
 /**
  * Creates a style function from the `glStyle` object for all layers that use
  * the specified `source`, which needs to be a `"type": "vector"` or
@@ -251,11 +236,9 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       resolutions.push(res);
     }
   }
-  if (typeof glStyle == 'object') {
-    // We do not want to modify the original, so we deep-clone it
-    glStyle = JSON.stringify(glStyle);
+  if (typeof glStyle == 'string') {
+    glStyle = JSON.parse(glStyle);
   }
-  glStyle = JSON.parse(glStyle);
   if (glStyle.version != 8) {
     throw new Error('glStyle version 8 required.');
   }
@@ -303,16 +286,13 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
     return wrappedText;
   }
 
-  const allLayers = glStyle.layers;
+  const allLayers = derefLayers(glStyle.layers);
+
   const layersBySourceLayer = {};
   const mapboxLayers = [];
   let mapboxSource;
   for (let i = 0, ii = allLayers.length; i < ii; ++i) {
     const layer = allLayers[i];
-    if (!layer.layout) {
-      layer.layout = {};
-    }
-    resolveRef(layer, glStyle);
     if (typeof source == 'string' && layer.source == source ||
         source.indexOf(layer.id) !== -1) {
       const sourceLayer = layer['source-layer'];
@@ -328,7 +308,6 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
         index: i
       });
       mapboxLayers.push(layer.id);
-      preprocess(layer, fonts);
     }
   }
 
@@ -359,13 +338,14 @@ export default function(olLayer, glStyle, source, resolutions, spriteData, sprit
       const layerData = layers[i];
       const layer = layerData.layer;
       const layerId = layer.id;
-      const layout = layer.layout;
-      const paint = layer.paint;
+      const layout = layer.layout || emptyObj;
+      const paint = layer.paint || emptyObj;
       if (layout.visibility === 'none' || ('minzoom' in layer && zoom < layer.minzoom) ||
           ('maxzoom' in layer && zoom >= layer.maxzoom)) {
         continue;
       }
-      if (!layer.filter || layer.filter(f)) {
+      const filter = layer.filter;
+      if (!filter || evaluateFilter(layerId, filter, f)) {
         let color, opacity, fill, stroke, strokeColor, style;
         const index = layerData.index;
         if (type == 3) {

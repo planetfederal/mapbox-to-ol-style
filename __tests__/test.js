@@ -1,4 +1,5 @@
 import should from 'should/as-function';
+import deepFreeze from 'deep-freeze';
 import applyStyleFunction from '../';
 import states from './data/states.json';
 import Feature from 'ol/feature';
@@ -11,6 +12,14 @@ describe('mapbox-to-ol-style', function() {
   beforeEach(function() {
     feature = new Feature(new Polygon([[[-1, -1], [-1, 1], [1, 1], [1, -1], [-1, -1]]]));
     layer = new VectorLayer();
+  });
+
+  it('does not modify the input style object', function() {
+    const style = JSON.parse(JSON.stringify(states));
+    deepFreeze(style);
+    should.doesNotThrow(function() {
+      applyStyleFunction(layer, style, 'states');
+    });
   });
 
   it('creates a style function with all layers of a source', function() {
