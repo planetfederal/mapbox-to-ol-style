@@ -15,6 +15,7 @@ import derefLayers from '@mapbox/mapbox-gl-style-spec/deref';
 import glfun from '@mapbox/mapbox-gl-style-spec/function';
 import createFilter from '@mapbox/mapbox-gl-style-spec/feature_filter';
 import mb2css from 'mapbox-to-css-font';
+import {deg2rad, getZoomForResolution} from './util';
 
 const functionTypes = {
   'line-miter-limit': 'interpolated',
@@ -138,19 +139,6 @@ function evaluateFilter(layerId, filter, feature) {
   return filterCache[layerId](feature);
 }
 
-function getZoomForResolution(resolution, resolutions) {
-  let i = 0;
-  const ii = resolutions.length;
-  for (; i < ii; ++i) {
-    const candidate = resolutions[i];
-    if (candidate < resolution && i + 1 < ii) {
-      const zoomFactor = resolutions[i] / resolutions[i + 1];
-      return i + Math.log(resolutions[i] / resolution) / Math.log(zoomFactor);
-    }
-  }
-  return ii - 1;
-}
-
 const colorCache = {};
 function colorWithOpacity(color, opacity) {
   if (color && opacity !== undefined) {
@@ -175,12 +163,7 @@ function colorWithOpacity(color, opacity) {
   return color;
 }
 
-function deg2rad(degrees) {
-  return degrees * Math.PI / 180;
-}
-
 const templateRegEx = /^([^]*)\{(.*)\}([^]*)$/;
-
 function fromTemplate(text, properties) {
   let parts;
   do {
