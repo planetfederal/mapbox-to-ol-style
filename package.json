@@ -1,5 +1,5 @@
 {
   "name": "mapbox-to-ol-style",
-  "version": "3.4.1",
+  "version": "99.0.0",
   "description": "Utility for creating OpenLayers style functions from Mapbox Style objects"
 }
